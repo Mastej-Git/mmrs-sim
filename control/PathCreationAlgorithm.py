@@ -19,7 +19,7 @@ class PathCreationAlgorithm:
         s = length / norm
         return vx * s, vy * s
 
-    def create_path(self, marked_states: list[tuple[int, int]], radius: float) -> None:
+    def create_path(self, marked_states: list[tuple[int, int]], orientation: tuple[int, int], radius: float) -> None:
         bezier_points = []
 
         start = 0
@@ -42,11 +42,12 @@ class PathCreationAlgorithm:
                 lap_ms_len = len(marked_states)
                 
             if i == 0:
-                orientation = np.array([0, 1])
+                # set_orient = np.array([0, 1])
+                set_orient = orientation
             else:
-                orientation = np.array(self.bezier_tangent(1, bezier_points[i - 1]))
+                set_orient = np.array(self.bezier_tangent(1, bezier_points[i - 1]))
 
-            ti_vec = orientation
+            ti_vec = set_orient
             pi_vec = end - start
 
             middle_point = start + radius * (ti_vec / np.linalg.norm(ti_vec))

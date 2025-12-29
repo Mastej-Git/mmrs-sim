@@ -38,7 +38,7 @@ class StageTransitionControl:
 
     def create_paths(self) -> None:
         for agv in self.agvs:
-            path = self.path_creator.create_path(agv.marked_states.copy(), agv.radius)
+            path = self.path_creator.create_path(agv.marked_states.copy(), agv.orientation, agv.radius)
             # print(path)
             agv.path = path
 

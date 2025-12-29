@@ -179,8 +179,9 @@ class GUI(QMainWindow):
         self.visualizer.draw()
 
     def on_det_col_sec_clicked(self):
-        self.visualizer.supervisor.detec_col_sectors()
-        self.visualizer.draw_coll_sectors()
+        # self.visualizer.supervisor.detec_col_sectors()
+        # self.visualizer.draw_coll_sectors()
+        self.visualizer.draw_one_coll_sector()
         self.visualizer.draw()
 
     def on_toggle_show_paths(self):
@@ -202,6 +203,7 @@ class GUI(QMainWindow):
         agvs = self.yaml_agv_loader.load_agvs_yaml()
         self.visualizer.supervisor.load_agvs(agvs)
         self.visualizer.supervisor.trigger_path_creation()
+        self.visualizer.supervisor.detec_col_sectors()
         for i in range(self.visualizer.supervisor.get_agvs_number()):
             self.visualizer.draw_bezier_curve(i)
         self.visualizer.draw()

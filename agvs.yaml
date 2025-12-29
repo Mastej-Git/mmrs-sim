@@ -19,6 +19,7 @@ agvs:
   #     - [7, 7]
   #     - [10, 4]
   #     - [13, 7]
+  #   orientation: [0, 1]
   #   radius: 0.5
   #   color: "#12700EFF"
   #   path_color: "#17D220"
@@ -30,30 +31,33 @@ agvs:
   #     - [7, 7]
   #     - [4, 4] 
   #     - [1, 7]
+  #   orientation: [0, 1]
   #   radius: 0.5
   #   color: "#330DCEFF"
   #   path_color: "#2F75CB"
 
-- id: agv2
-  marked_states:
-    - [3.0, 9.3]    # Intersection 1
-    - [4.5, 6.1]    # Curve down
-    - [7.0, 4.0]    # Vertex (Bottom of bowl)
-    - [9.5, 6.1]    # Curve up
-    - [11.0, 9.3]   # Intersection 2
-    - [13.0, 19.0]  # Extended path
-  radius: 0.5
-  color: "#12700EFF"
-  path_color: "#17D220"
+  - id: agv2
+    marked_states:
+      - [3.0, 9.3]    
+      - [4.5, 6.1]    
+      - [7.0, 4.0]    
+      - [9.5, 6.1]    
+      - [11.0, 9.3]   
+      - [13.0, 19.0]  
+    orientation: [1, 0]
+    radius: 0.5
+    color: "#12700EFF"
+    path_color: "#17D220"
 
-- id: agv3
-  marked_states:
-    - [9.3, 3.0]    # Intersection 3
-    - [6.1, 4.5]    # Curve left
-    - [4.0, 7.0]    # Vertex (Side of bowl)
-    - [6.1, 9.5]    # Curve right
-    - [9.3, 11.0]   # Intersection 4
-    - [19.0, 13.0]  # Extended path
-  radius: 0.5
-  color: "#330DCEFF"
-  path_color: "#2F75CB"
+  - id: agv3
+    marked_states:
+      - [9.3, 3.0]    
+      - [6.1, 4.5]    
+      - [4.0, 7.0]    
+      - [6.1, 9.5]    
+      - [9.3, 11.0]   
+      - [19.0, 13.0]
+    orientation: [0, 1]
+    radius: 0.5
+    color: "#330DCEFF"
+    path_color: "#2F75CB"
