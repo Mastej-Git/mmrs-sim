@@ -45,7 +45,7 @@ agvs:
       - [11.0, 9.3]   
       - [13.0, 19.0]  
     orientation: [1, 0]
-    radius: 0.5
+    radius: 0.3
     color: "#12700EFF"
     path_color: "#17D220"
 
@@ -58,6 +58,19 @@ agvs:
       - [9.3, 11.0]   
       - [19.0, 13.0]
     orientation: [0, 1]
-    radius: 0.5
+    radius: 0.3
     color: "#330DCEFF"
     path_color: "#2F75CB"
+
+  - id: agv4
+    marked_states:
+      - [7, 17]
+      - [9, 9]
+      - [13, 8]
+      - [15, 11]
+      - [13, 14]
+      - [10, 19]
+    orientation: [-1, 0]
+    radius: 0.3
+    color: "#E36F10"
+    path_color: "#CF8040"

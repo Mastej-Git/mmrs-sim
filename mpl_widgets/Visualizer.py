@@ -21,8 +21,10 @@ class Visualizer(FigureCanvas):
         self.supervisor = StageTransitionControl(None)
         self.visual_agvs = []
 
-        self.t = [0.0, 0.0]
-        self.path_idx = [0, 0]
+        # self.t = [0.0, 0.0]
+        # self.path_idx = [0, 0]
+        self.t = []
+        self.path_idx = []
 
         # self.draw_square_grid(20)
         self.set_axis_limits(20)
@@ -35,6 +37,10 @@ class Visualizer(FigureCanvas):
 
     def start_moving(self) -> None:
         self.timer.start(50)
+
+    def load_agvs_t(self) -> None:
+        self.t = list(0.0 for _ in range(len(self.supervisor.agvs)))
+        self.path_idx = list(0 for _ in range(len(self.supervisor.agvs)))
 
     def bezier_point(self, t: float, verts: list[tuple[int, int]]) -> tuple[float, float]:
         return (
@@ -77,19 +83,21 @@ class Visualizer(FigureCanvas):
             point = patches.Circle(p[1], 0.1, color="#EADA62", zorder=4)
             self.ax.add_patch(point)
 
-    def draw_sector_on_curve(self, verts, t_l, t_u):
+    def draw_sector_on_curve(self, verts, t_l: float, t_u: float) -> None:
         if t_u <= t_l:
             return
         ts = np.linspace(max(0.0, t_l), min(1.0, t_u), 80)
         pts = np.array([self.bezier_point(t, verts) for t in ts])
         self.ax.plot(pts[:, 0], pts[:, 1], color="#FF4136", linewidth=6.0, alpha=0.6, solid_capstyle='round', zorder=5)
 
-    def draw_coll_sectors(self):
-        for sec1, sec2 in self.supervisor.col_sectors:
-            self.draw_sector_on_curve(sec1.addresses[0], sec1.t_l, sec1.t_u,)
-            self.draw_sector_on_curve(sec2.addresses[1], sec2.t_l, sec2.t_u,)
+    def draw_coll_sectors(self) -> None:
+        for sect_pair in self.supervisor.col_sectors:
+            sect1 = sect_pair[0]
+            sect2 = sect_pair[1]
+            self.draw_sector_on_curve(sect1[0].addresses[0], sect1[0].t_l, sect1[0].t_u,)
+            self.draw_sector_on_curve(sect2[0].addresses[1], sect2[0].t_l, sect2[0].t_u,)
 
-    def draw_one_coll_sector(self):
+    def draw_one_coll_sector(self) -> None:
         sec1, sec2 = self.supervisor.col_sectors[0]
         self.draw_sector_on_curve(sec1.addresses[0], sec1.t_l, sec1.t_u,)
         self.draw_sector_on_curve(sec2.addresses[1], sec2.t_l, sec2.t_u,)
