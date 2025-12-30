@@ -4,8 +4,6 @@ from control.CollisionSectorAlgorithm import CollisionSectorAlgorithm
 
 from itertools import combinations
 
-from new_tmp_2912 import process_curve_pair_multi
-
 class StageTransitionControl:
 
     def __init__(self):
@@ -28,7 +26,9 @@ class StageTransitionControl:
                     curveA = agv1.path[i]
                     curveB = agv2.path[j]
 
-                    s1, s2 = process_curve_pair_multi(curveA, curveB, agv2.radius, agv1.radius, emergency_factor=1.1)
+                    s1, s2 = self.col_det_alg.process_curve_pair_multi(
+                        curveA, curveB, agv2.radius, agv1.radius, emergency_factor=1.1
+                    )
                     if len(s1) != 0 and len(s2) != 0:
                         self.col_sectors.append((s1, s2))
 

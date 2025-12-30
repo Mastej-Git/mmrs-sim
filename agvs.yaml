@@ -70,7 +70,7 @@ agvs:
       - [15, 11]
       - [13, 14]
       - [10, 19]
-    orientation: [-1, 0]
+    orientation: [0, -1]
     radius: 0.3
     color: "#E36F10"
     path_color: "#CF8040"

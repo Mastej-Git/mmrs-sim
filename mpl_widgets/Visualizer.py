@@ -18,7 +18,7 @@ class Visualizer(FigureCanvas):
 
         self.simulation_f = False
 
-        self.supervisor = StageTransitionControl(None)
+        self.supervisor = StageTransitionControl()
         self.visual_agvs = []
 
         # self.t = [0.0, 0.0]
