@@ -42,7 +42,6 @@ class PathCreationAlgorithm:
                 lap_ms_len = len(marked_states)
                 
             if i == 0:
-                # set_orient = np.array([0, 1])
                 set_orient = orientation
             else:
                 set_orient = np.array(self.bezier_tangent(1, bezier_points[i - 1]))

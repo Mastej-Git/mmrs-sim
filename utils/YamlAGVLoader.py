@@ -22,5 +22,7 @@ class YamlAGVLoader:
                 path_color=agv_cfg["path_color"],
             )
             agvs[agv_cfg["id"]] = agv
+            if "path" in agv_cfg:
+                agv.path = [[tuple(coords) for coords in bc] for bc in agv_cfg["path"]]
 
         return agvs

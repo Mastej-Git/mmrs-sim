@@ -27,7 +27,7 @@ class Visualizer(FigureCanvas):
         self.path_idx = []
 
         # self.draw_square_grid(20)
-        self.set_axis_limits(20)
+        self.set_axis_limits(25)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_position_forward)
