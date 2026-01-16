@@ -3,9 +3,9 @@ import matplotlib.patches as patches
 
 class AGV:
 
-    def __init__(self, marked_states: list[tuple[int, int]], radius: float, color: str, path_color: str):
+    def __init__(self, marked_states: list[tuple[int, int]], orientation: tuple[int, int],radius: float, color: str, path_color: str):
         self.marked_states = marked_states
-        self.orientation = 0.0
+        self.orientation = orientation
         self.radius = radius
         self.color = color
         self.path_color = path_color

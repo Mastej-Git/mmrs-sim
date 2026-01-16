@@ -11,7 +11,6 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QTimer
 from utils.StyleSheet import StyleSheet
 
-from mpl_widgets.SingleBezierCurve import SingleBezierCurve
 from mpl_widgets.AnimatedButton import AnimatedButton
 from mpl_widgets.Visualizer import Visualizer
 from utils.YamlAGVLoader import YamlAGVLoader
@@ -23,14 +22,11 @@ class GUI(QMainWindow):
         super().__init__()
         self.setWindowTitle("MMRS Simulator")
         self.setGeometry(100, 100, 1200, 800)
-        # start application in full screen
-        # note: this will make the main window fullscreen when constructed
-        # call showFullScreen() here so the app opens fullscreen instead of fixed 800x600
+
         # self.showFullScreen()
 
-        # timer used for periodic updates when "Run" is active
         self._update_timer = QTimer(self)
-        self._update_timer.setInterval(40)  # ~25 FPS, adjust as needed
+        self._update_timer.setInterval(40)
         self._update_timer.timeout.connect(self._on_update_tick)
 
         central_widget = QFrame()
@@ -49,13 +45,12 @@ class GUI(QMainWindow):
         self.tabs.addTab(self.tab2, "Tab 2")
         self.tabs.addTab(self.tab3, "Tab 3")
 
-        self.single_bc = SingleBezierCurve(self, width=5, height=4, dpi=100)
         self.visualizer = Visualizer(self, width=5, height=4, dpi=100)
         self.yaml_agv_loader = YamlAGVLoader()
 
         self.create_tabs_content()
 
-        layout.addWidget(self.tabs, 1)  # stretch factor 1 -> takes remaining space
+        layout.addWidget(self.tabs, 1)
         self.side_panel = self.create_control_panel()
         layout.addWidget(self.side_panel)
         self.setCentralWidget(central_widget)
@@ -63,9 +58,7 @@ class GUI(QMainWindow):
     def create_control_panel(self) -> QFrame:
         panel = QFrame()
         panel.setObjectName("controlPanel")
-        panel.setFixedWidth(250)  # keep a constant width for the side panel
-        # use existing central/app theme so the panel matches the rest of the UI
-        # CentralWidget provides the same background as the main area
+        panel.setFixedWidth(250)
         panel.setStyleSheet(StyleSheet.CentralWidget.value)
 
         vbox = QVBoxLayout(panel)
@@ -103,8 +96,9 @@ class GUI(QMainWindow):
         self.btn_show_points = AnimatedButton("Show Mid Points")
         self.btn_show_lines = AnimatedButton("Show Add lines")
         self.btn_show_all = AnimatedButton("Show All")
+        self.btn_det_col_sec = AnimatedButton("Define Coll Sectors")
 
-        for b in (self.btn_show_paths, self.btn_show_points, self.btn_show_lines, self.btn_show_all):
+        for b in (self.btn_show_paths, self.btn_show_points, self.btn_show_lines, self.btn_show_all, self.btn_det_col_sec):
             b.setCheckable(True)
             b.setChecked(True)
             b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -114,6 +108,7 @@ class GUI(QMainWindow):
         self.btn_show_points.clicked.connect(self.on_toggle_show_points)
         self.btn_show_lines.clicked.connect(self.on_toggle_show_lines)
         self.btn_show_all.clicked.connect(self.on_show_all_clicked)
+        self.btn_det_col_sec.clicked.connect(self.on_det_col_sec_clicked)
 
 
         vbox.addWidget(show_title)
@@ -152,7 +147,6 @@ class GUI(QMainWindow):
         self.tab1.setLayout(layout1)
 
         layout2 = QVBoxLayout()
-        layout2.addWidget(self.single_bc)
         self.tab2.setLayout(layout2)
 
     def on_run_clicked(self):
@@ -177,23 +171,45 @@ class GUI(QMainWindow):
             self.visualizer.draw_curve(i)
             self.visualizer.draw_middle_points(i)
             self.visualizer.draw_add_lines(i)
+        self.visualizer.draw()
+
+    def on_det_col_sec_clicked(self):
+        self.visualizer.draw_coll_sectors()
+        # self.visualizer.draw_one_coll_sector()
+        self.visualizer.draw()
 
     def on_toggle_show_paths(self):
         for i in range(self.visualizer.supervisor.get_agvs_number()):
             self.visualizer.draw_curve(i)
+        self.visualizer.draw()
 
     def on_toggle_show_points(self):
         for i in range(self.visualizer.supervisor.get_agvs_number()):
             self.visualizer.draw_middle_points(i)
+        self.visualizer.draw()
 
     def on_toggle_show_lines(self):
         for i in range(self.visualizer.supervisor.get_agvs_number()):
             self.visualizer.draw_add_lines(i)
+        self.visualizer.draw()
 
     def on_load_agv_clicked(self):
         agvs = self.yaml_agv_loader.load_agvs_yaml()
         self.visualizer.supervisor.load_agvs(agvs)
+        self.visualizer.load_agvs_t()
         self.visualizer.supervisor.trigger_path_creation()
+        self.visualizer.supervisor.detec_col_sectors()
         for i in range(self.visualizer.supervisor.get_agvs_number()):
             self.visualizer.draw_bezier_curve(i)
+        self.visualizer.draw()
+
+    def _on_update_tick(self):
+        for w in (self.path_creation_algorithm, self.single_bc):
+            for method in ("update_plot", "redraw", "update", "repaint"):
+                if hasattr(w, method):
+                    try:
+                        getattr(w, method)()
+                    except Exception:
+                        pass
+                    break
 

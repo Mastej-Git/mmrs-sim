@@ -6,16 +6,7 @@ from matplotlib.figure import Figure
 from matplotlib.path import Path
 import matplotlib.patches as patches
 import numpy as np
-# from control.AGV import AGV
 from control.StageTransitionControl import StageTransitionControl
-
-
-
-class Sector:
-    def __init__(self, limit_inferior: tuple[int, int], limit_superior: tuple[int, int]):
-        self.limit_inferior = limit_inferior
-        self.limit_superior = limit_superior
-        self.adresses_list = []
 
 
 class Visualizer(FigureCanvas):
@@ -27,15 +18,14 @@ class Visualizer(FigureCanvas):
 
         self.simulation_f = False
 
-        self.supervisor = StageTransitionControl(None)
+        self.supervisor = StageTransitionControl()
         self.visual_agvs = []
 
-        self.t = [0.0, 0.0]
-        self.path_idx = [0, 0]
+        self.t = []
+        self.path_idx = []
 
-        self.draw_square_grid(15)
-        # for i in range(self.supervisor.get_agvs_number()):
-        #     self.draw_bezier_curve(i)
+        # self.draw_square_grid(20)
+        self.set_axis_limits(25)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_position_forward)
@@ -46,23 +36,28 @@ class Visualizer(FigureCanvas):
     def start_moving(self) -> None:
         self.timer.start(50)
 
-    def bezier_point(self, t: float, verts: list[tuple[int, int]]):
+    def load_agvs_t(self) -> None:
+        self.t = list(0.0 for _ in range(len(self.supervisor.agvs)))
+        self.path_idx = list(0 for _ in range(len(self.supervisor.agvs)))
+
+    def bezier_point(self, t: float, verts: list[tuple[int, int]]) -> tuple[float, float]:
         return (
             (1 - t) ** 2 * np.array(verts[0])
             + 2 * (1 - t) * t * np.array(verts[1])
             + t ** 2 * np.array(verts[2])
         )
 
-    def draw_square_grid(self, size=10):
+    def draw_square_grid(self, size: int = 10) -> None:
         for x in range(size + 1):
             self.ax.axhline(x, color="gray", linewidth=0.5)
             self.ax.axvline(x, color="gray", linewidth=0.5)
 
+    def set_axis_limits(self, size: int) -> None:
         self.ax.set_xlim(0, size)
         self.ax.set_ylim(0, size)
         self.ax.set_aspect("equal")
 
-    def draw_curve(self, i) -> None:
+    def draw_curve(self, i: int) -> None:
         for path in self.supervisor.agvs[i].path:
             codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
             path_draw = Path(path, codes)
@@ -70,33 +65,43 @@ class Visualizer(FigureCanvas):
             patch = patches.PathPatch(path_draw, facecolor="none", lw=2, edgecolor=self.supervisor.agvs[i].path_color)
             self.ax.add_patch(patch)
 
-        self.draw()
-
-    def draw_add_lines(self, i) -> None:
+    def draw_add_lines(self, i: int) -> None:
         for positions in self.supervisor.agvs[i].path:
             x, y = zip(*positions)
             self.ax.plot(x, y, "ro--")
-        self.draw()
 
-    def draw_marked_states(self):
+    def draw_marked_states(self) -> None:
         for agv in self.supervisor.agvs:
             for marked_state in agv.marked_states:
                 point = patches.Circle(marked_state, 0.1, color=agv.path_color, zorder=4)
                 self.ax.add_patch(point)
 
-    def draw_middle_points(self, i):
+    def draw_middle_points(self, i: int) -> None:
         for p in self.supervisor.agvs[i].path:
             point = patches.Circle(p[1], 0.1, color="#EADA62", zorder=4)
             self.ax.add_patch(point)
-        self.draw()
 
-    def draw_bezier_curve(self, i) -> None:
+    def draw_sector_on_curve(self, verts, t_l: float, t_u: float) -> None:
+        if t_u <= t_l:
+            return
+        ts = np.linspace(max(0.0, t_l), min(1.0, t_u), 80)
+        pts = np.array([self.bezier_point(t, verts) for t in ts])
+        self.ax.plot(pts[:, 0], pts[:, 1], color="#FF4136", linewidth=6.0, alpha=0.6, solid_capstyle='round', zorder=5)
 
-        # for p in self.supervisor.agvs[i].path:
-        #     point = patches.Circle(p[1], 0.1, color="#EADA62", zorder=4)
-        #     self.ax.add_patch(point)
-        #     self.draw_curve(p, self.supervisor.agvs[i].path_color)
-        #     self.draw_add_lines(p)
+    def draw_coll_sectors(self) -> None:
+        for sect_pair in self.supervisor.col_sectors:
+            sect1 = sect_pair[0]
+            sect2 = sect_pair[1]
+            self.draw_sector_on_curve(sect1[0].addresses[0], sect1[0].t_l, sect1[0].t_u,)
+            self.draw_sector_on_curve(sect2[0].addresses[1], sect2[0].t_l, sect2[0].t_u,)
+
+    def draw_one_coll_sector(self) -> None:
+        sec1, sec2 = self.supervisor.col_sectors[0]
+        self.draw_sector_on_curve(sec1.addresses[0], sec1.t_l, sec1.t_u,)
+        self.draw_sector_on_curve(sec2.addresses[1], sec2.t_l, sec2.t_u,)
+        self.supervisor.col_sectors.pop(0)
+
+    def draw_bezier_curve(self, i: int) -> None:
 
         self.draw_marked_states()
         agv = patches.Circle(
@@ -108,9 +113,7 @@ class Visualizer(FigureCanvas):
         self.visual_agvs.append(agv)
         self.ax.add_patch(self.visual_agvs[i])
 
-        self.draw()
-
-    def update_position_forward(self):
+    def update_position_forward(self) -> None:
         for i in range(len(self.supervisor.agvs)):
             self.t[i] += 0.01
             if self.t[i] > 1.0:
@@ -124,7 +127,7 @@ class Visualizer(FigureCanvas):
 
         self.draw()
 
-    def update_position_back(self):
+    def update_position_back(self) -> None:
         for i in range(len(self.supervisor.agvs)):
             self.t[i] -= 0.01
             if self.t[i] < 0.0:
@@ -138,7 +141,7 @@ class Visualizer(FigureCanvas):
 
         self.draw()
 
-    def reset_simulation(self):
+    def reset_simulation(self) -> None:
         for i in range(len(self.supervisor.agvs)):
             self.t[i] = 0
             self.path_idx[i] = 0
@@ -149,7 +152,7 @@ class Visualizer(FigureCanvas):
         self.draw()
             
     
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event) -> None:
         if event.key() == Qt.Key_Space:
             if self.simulation_f is False:
                 self.timer.start(50)

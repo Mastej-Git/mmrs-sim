@@ -16,7 +16,7 @@ class AnimatedButton(QPushButton):
 
         self.clicked.connect(self.animate_click)
 
-    def animate_click(self):
+    def animate_click(self) -> None:
 
         original_geometry = self.geometry()
         scaled_geometry = QRect(
@@ -36,7 +36,7 @@ class AnimatedButton(QPushButton):
         
         self.animation.start()
 
-    def animate_reverse(self):
+    def animate_reverse(self) -> None:
         original_geometry = self.geometry()
         normal_geometry = QRect(
             original_geometry.x() + 5, 
