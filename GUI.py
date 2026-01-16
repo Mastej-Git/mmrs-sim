@@ -22,14 +22,11 @@ class GUI(QMainWindow):
         super().__init__()
         self.setWindowTitle("MMRS Simulator")
         self.setGeometry(100, 100, 1200, 800)
-        # start application in full screen
-        # note: this will make the main window fullscreen when constructed
-        # call showFullScreen() here so the app opens fullscreen instead of fixed 800x600
+
         # self.showFullScreen()
 
-        # timer used for periodic updates when "Run" is active
         self._update_timer = QTimer(self)
-        self._update_timer.setInterval(40)  # ~25 FPS, adjust as needed
+        self._update_timer.setInterval(40)
         self._update_timer.timeout.connect(self._on_update_tick)
 
         central_widget = QFrame()
@@ -53,7 +50,7 @@ class GUI(QMainWindow):
 
         self.create_tabs_content()
 
-        layout.addWidget(self.tabs, 1)  # stretch factor 1 -> takes remaining space
+        layout.addWidget(self.tabs, 1)
         self.side_panel = self.create_control_panel()
         layout.addWidget(self.side_panel)
         self.setCentralWidget(central_widget)
@@ -61,9 +58,7 @@ class GUI(QMainWindow):
     def create_control_panel(self) -> QFrame:
         panel = QFrame()
         panel.setObjectName("controlPanel")
-        panel.setFixedWidth(250)  # keep a constant width for the side panel
-        # use existing central/app theme so the panel matches the rest of the UI
-        # CentralWidget provides the same background as the main area
+        panel.setFixedWidth(250)
         panel.setStyleSheet(StyleSheet.CentralWidget.value)
 
         vbox = QVBoxLayout(panel)

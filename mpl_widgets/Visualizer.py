@@ -21,8 +21,6 @@ class Visualizer(FigureCanvas):
         self.supervisor = StageTransitionControl()
         self.visual_agvs = []
 
-        # self.t = [0.0, 0.0]
-        # self.path_idx = [0, 0]
         self.t = []
         self.path_idx = []
 
