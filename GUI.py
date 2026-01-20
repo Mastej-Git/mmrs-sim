@@ -106,7 +106,8 @@ class GUI(QMainWindow):
 
         self.btn_show_paths.clicked.connect(self.on_show_paths_clicked)
         self.btn_show_paths.setChecked(False)
-        self.btn_show_points.clicked.connect(self.on_show_points_clicked)
+        self.btn_show_points.clicked.connect(self.on_show_mpoints_clicked)
+        self.btn_show_points.setChecked(False)
         self.btn_show_lines.clicked.connect(self.on_show_lines_clicked)
         self.btn_show_all.clicked.connect(self.on_show_all_clicked)
         self.btn_det_col_sec.clicked.connect(self.on_det_col_sec_clicked)
@@ -177,9 +178,14 @@ class GUI(QMainWindow):
             self.visualizer.remove_curves()
         self.visualizer.draw()
 
-    def on_show_points_clicked(self):
-        for i in range(self.visualizer.supervisor.get_agvs_number()):
-            self.visualizer.draw_middle_points(i)
+    def on_show_mpoints_clicked(self):
+        if self.btn_show_points.isChecked():
+            self.btn_show_points.setText("Hide Points")
+            for i in range(self.visualizer.supervisor.get_agvs_number()):
+                self.visualizer.draw_middle_points(i)
+        else:
+            self.btn_show_points.setText("Show Points")
+            self.visualizer.remove_middle_points()
         self.visualizer.draw()
 
     def on_show_lines_clicked(self):

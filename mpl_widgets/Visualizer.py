@@ -27,6 +27,12 @@ class Visualizer(FigureCanvas):
         # self.draw_square_grid(20)
         self.set_axis_limits(25)
 
+        self._drawn_elements = {
+            'curves': [],
+            'points': [],
+            'lines': [],
+            'collision_sectors': []
+        }
         self.curve_list = []
 
         self.timer = QTimer()
@@ -66,12 +72,13 @@ class Visualizer(FigureCanvas):
 
             patch = patches.PathPatch(path_draw, facecolor="none", lw=2, edgecolor=self.supervisor.agvs[i].path_color)
             self.ax.add_patch(patch)
-            self.curve_list.append(patch)
+            # self.curve_list.append(patch)
+            self._drawn_elements['curves'].append(patch)
 
     def remove_curves(self) -> None:
-        for curve in self.curve_list:
+        for curve in self._drawn_elements['curves']:
             curve.remove()
-        self.curve_list.clear()
+        self._drawn_elements['curves'].clear()
 
     def draw_add_lines(self, i: int) -> None:
         for positions in self.supervisor.agvs[i].path:
@@ -88,6 +95,12 @@ class Visualizer(FigureCanvas):
         for p in self.supervisor.agvs[i].path:
             point = patches.Circle(p[1], 0.1, color="#EADA62", zorder=4)
             self.ax.add_patch(point)
+            self._drawn_elements['points'].append(point)
+
+    def remove_middle_points(self) -> None:
+        for middle_point in self._drawn_elements['points']:
+            middle_point.remove()
+        self._drawn_elements['points'].clear()
 
     def draw_sector_on_curve(self, verts, t_l: float, t_u: float) -> None:
         if t_u <= t_l:
