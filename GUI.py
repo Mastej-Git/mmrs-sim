@@ -104,9 +104,10 @@ class GUI(QMainWindow):
             b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             show_layout.addWidget(b)
 
-        self.btn_show_paths.clicked.connect(self.on_toggle_show_paths)
-        self.btn_show_points.clicked.connect(self.on_toggle_show_points)
-        self.btn_show_lines.clicked.connect(self.on_toggle_show_lines)
+        self.btn_show_paths.clicked.connect(self.on_show_paths_clicked)
+        self.btn_show_paths.setChecked(False)
+        self.btn_show_points.clicked.connect(self.on_show_points_clicked)
+        self.btn_show_lines.clicked.connect(self.on_show_lines_clicked)
         self.btn_show_all.clicked.connect(self.on_show_all_clicked)
         self.btn_det_col_sec.clicked.connect(self.on_det_col_sec_clicked)
 
@@ -166,10 +167,23 @@ class GUI(QMainWindow):
     def on_reset_clicked(self):
         self.visualizer.reset_simulation()
 
-    def on_show_all_clicked(self):
+    def on_show_paths_clicked(self):
+        if self.btn_show_paths.isChecked():
+            self.btn_show_paths.setText("Hide Paths")
+            for i in range(self.visualizer.supervisor.get_agvs_number()):
+                self.visualizer.draw_curve(i)
+        else:
+            self.btn_show_paths.setText("Show Paths")
+            self.visualizer.remove_curves()
+        self.visualizer.draw()
+
+    def on_show_points_clicked(self):
         for i in range(self.visualizer.supervisor.get_agvs_number()):
-            self.visualizer.draw_curve(i)
             self.visualizer.draw_middle_points(i)
+        self.visualizer.draw()
+
+    def on_show_lines_clicked(self):
+        for i in range(self.visualizer.supervisor.get_agvs_number()):
             self.visualizer.draw_add_lines(i)
         self.visualizer.draw()
 
@@ -178,19 +192,12 @@ class GUI(QMainWindow):
         # self.visualizer.draw_one_coll_sector()
         self.visualizer.draw()
 
-    def on_toggle_show_paths(self):
+    def on_show_all_clicked(self):
         for i in range(self.visualizer.supervisor.get_agvs_number()):
             self.visualizer.draw_curve(i)
-        self.visualizer.draw()
-
-    def on_toggle_show_points(self):
-        for i in range(self.visualizer.supervisor.get_agvs_number()):
             self.visualizer.draw_middle_points(i)
-        self.visualizer.draw()
-
-    def on_toggle_show_lines(self):
-        for i in range(self.visualizer.supervisor.get_agvs_number()):
             self.visualizer.draw_add_lines(i)
+            # self.visualizer.remove_curve(i)
         self.visualizer.draw()
 
     def on_load_agv_clicked(self):

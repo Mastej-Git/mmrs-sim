@@ -27,6 +27,8 @@ class Visualizer(FigureCanvas):
         # self.draw_square_grid(20)
         self.set_axis_limits(25)
 
+        self.curve_list = []
+
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_position_forward)
 
@@ -64,6 +66,12 @@ class Visualizer(FigureCanvas):
 
             patch = patches.PathPatch(path_draw, facecolor="none", lw=2, edgecolor=self.supervisor.agvs[i].path_color)
             self.ax.add_patch(patch)
+            self.curve_list.append(patch)
+
+    def remove_curves(self) -> None:
+        for curve in self.curve_list:
+            curve.remove()
+        self.curve_list.clear()
 
     def draw_add_lines(self, i: int) -> None:
         for positions in self.supervisor.agvs[i].path:
