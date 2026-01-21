@@ -31,7 +31,7 @@ class Visualizer(FigureCanvas):
             'curves': [],
             'points': [],
             'lines': [],
-            'collision_sectors': []
+            'csectors': []
         }
         self.curve_list = []
 
@@ -113,7 +113,8 @@ class Visualizer(FigureCanvas):
             return
         ts = np.linspace(max(0.0, t_l), min(1.0, t_u), 80)
         pts = np.array([self.bezier_point(t, verts) for t in ts])
-        self.ax.plot(pts[:, 0], pts[:, 1], color="#FF4136", linewidth=6.0, alpha=0.6, solid_capstyle='round', zorder=5)
+        csector, = self.ax.plot(pts[:, 0], pts[:, 1], color="#FF4136", linewidth=6.0, alpha=0.6, solid_capstyle='round', zorder=5)
+        self._drawn_elements['csectors'].append(csector)
 
     def draw_coll_sectors(self) -> None:
         for sect_pair in self.supervisor.col_sectors:
@@ -121,6 +122,11 @@ class Visualizer(FigureCanvas):
             sect2 = sect_pair[1]
             self.draw_sector_on_curve(sect1[0].addresses[0], sect1[0].t_l, sect1[0].t_u,)
             self.draw_sector_on_curve(sect2[0].addresses[1], sect2[0].t_l, sect2[0].t_u,)
+
+    def remove_coll_sectors(self) -> None:
+        for csector in self._drawn_elements['csectors']:
+            csector.remove()
+        self._drawn_elements['csectors'].clear()
 
     def draw_one_coll_sector(self) -> None:
         sec1, sec2 = self.supervisor.col_sectors[0]
