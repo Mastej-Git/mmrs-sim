@@ -94,7 +94,7 @@ class GUI(QMainWindow):
 
         self.btn_show_paths = AnimatedButton("Show Paths")
         self.btn_show_points = AnimatedButton("Show Mid Points")
-        self.btn_show_lines = AnimatedButton("Show Add lines")
+        self.btn_show_lines = AnimatedButton("Show Lines")
         self.btn_show_all = AnimatedButton("Show All")
         self.btn_det_col_sec = AnimatedButton("Define Coll Sectors")
 
@@ -109,6 +109,7 @@ class GUI(QMainWindow):
         self.btn_show_points.clicked.connect(self.on_show_mpoints_clicked)
         self.btn_show_points.setChecked(False)
         self.btn_show_lines.clicked.connect(self.on_show_lines_clicked)
+        self.btn_show_lines.setChecked(False)
         self.btn_show_all.clicked.connect(self.on_show_all_clicked)
         self.btn_det_col_sec.clicked.connect(self.on_det_col_sec_clicked)
 
@@ -189,8 +190,13 @@ class GUI(QMainWindow):
         self.visualizer.draw()
 
     def on_show_lines_clicked(self):
-        for i in range(self.visualizer.supervisor.get_agvs_number()):
-            self.visualizer.draw_add_lines(i)
+        if self.btn_show_lines.isChecked():
+            self.btn_show_lines.setText("Hide Lines")
+            for i in range(self.visualizer.supervisor.get_agvs_number()):
+                self.visualizer.draw_add_lines(i)
+        else:
+            self.btn_show_lines.setText("Show Lines")
+            self.visualizer.remove_lines()
         self.visualizer.draw()
 
     def on_det_col_sec_clicked(self):

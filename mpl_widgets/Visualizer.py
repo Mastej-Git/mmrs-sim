@@ -83,7 +83,13 @@ class Visualizer(FigureCanvas):
     def draw_add_lines(self, i: int) -> None:
         for positions in self.supervisor.agvs[i].path:
             x, y = zip(*positions)
-            self.ax.plot(x, y, "ro--")
+            line, = self.ax.plot(x, y, "ro--")
+            self._drawn_elements['lines'].append(line)
+
+    def remove_lines(self) -> None:
+        for line in self._drawn_elements['lines']:
+            line.remove()
+        self._drawn_elements['lines'].clear()
 
     def draw_marked_states(self) -> None:
         for agv in self.supervisor.agvs:
