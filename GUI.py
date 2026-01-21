@@ -94,19 +94,19 @@ class GUI(QMainWindow):
 
         self.btn_show_paths = AnimatedButton("Show Paths")
         self.btn_show_points = AnimatedButton("Show Mid Points")
-        self.btn_show_lines = AnimatedButton("Show Add lines")
+        self.btn_show_lines = AnimatedButton("Show Lines")
+        self.btn_det_col_sec = AnimatedButton("Show Coll Sectors")
         self.btn_show_all = AnimatedButton("Show All")
-        self.btn_det_col_sec = AnimatedButton("Define Coll Sectors")
 
-        for b in (self.btn_show_paths, self.btn_show_points, self.btn_show_lines, self.btn_show_all, self.btn_det_col_sec):
+        for b in (self.btn_show_paths, self.btn_show_points, self.btn_show_lines, self.btn_det_col_sec, self.btn_show_all):
             b.setCheckable(True)
-            b.setChecked(True)
+            b.setChecked(False)
             b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             show_layout.addWidget(b)
 
-        self.btn_show_paths.clicked.connect(self.on_toggle_show_paths)
-        self.btn_show_points.clicked.connect(self.on_toggle_show_points)
-        self.btn_show_lines.clicked.connect(self.on_toggle_show_lines)
+        self.btn_show_paths.clicked.connect(self.on_show_paths_clicked)
+        self.btn_show_points.clicked.connect(self.on_show_mpoints_clicked)
+        self.btn_show_lines.clicked.connect(self.on_show_lines_clicked)
         self.btn_show_all.clicked.connect(self.on_show_all_clicked)
         self.btn_det_col_sec.clicked.connect(self.on_det_col_sec_clicked)
 
@@ -166,31 +166,60 @@ class GUI(QMainWindow):
     def on_reset_clicked(self):
         self.visualizer.reset_simulation()
 
-    def on_show_all_clicked(self):
-        for i in range(self.visualizer.supervisor.get_agvs_number()):
-            self.visualizer.draw_curve(i)
-            self.visualizer.draw_middle_points(i)
-            self.visualizer.draw_add_lines(i)
+    def on_show_paths_clicked(self):
+        if self.btn_show_paths.isChecked():
+            self.btn_show_paths.setText("Hide Paths")
+            for i in range(self.visualizer.supervisor.get_agvs_number()):
+                self.visualizer.draw_curve(i)
+        else:
+            self.btn_show_paths.setText("Show Paths")
+            self.visualizer.remove_curves()
+        self.visualizer.draw()
+
+    def on_show_mpoints_clicked(self):
+        if self.btn_show_points.isChecked():
+            self.btn_show_points.setText("Hide Points")
+            for i in range(self.visualizer.supervisor.get_agvs_number()):
+                self.visualizer.draw_middle_points(i)
+        else:
+            self.btn_show_points.setText("Show Points")
+            self.visualizer.remove_middle_points()
+        self.visualizer.draw()
+
+    def on_show_lines_clicked(self):
+        if self.btn_show_lines.isChecked():
+            self.btn_show_lines.setText("Hide Lines")
+            for i in range(self.visualizer.supervisor.get_agvs_number()):
+                self.visualizer.draw_add_lines(i)
+        else:
+            self.btn_show_lines.setText("Show Lines")
+            self.visualizer.remove_lines()
         self.visualizer.draw()
 
     def on_det_col_sec_clicked(self):
-        self.visualizer.draw_coll_sectors()
+        if self.btn_det_col_sec.isChecked():
+            self.btn_det_col_sec.setText("Hide Coll Sectors")
+            self.visualizer.draw_coll_sectors()
         # self.visualizer.draw_one_coll_sector()
+        else:
+            self.btn_det_col_sec.setText("Show Coll Sectors")
+            self.visualizer.remove_coll_sectors()
         self.visualizer.draw()
 
-    def on_toggle_show_paths(self):
-        for i in range(self.visualizer.supervisor.get_agvs_number()):
-            self.visualizer.draw_curve(i)
-        self.visualizer.draw()
-
-    def on_toggle_show_points(self):
-        for i in range(self.visualizer.supervisor.get_agvs_number()):
-            self.visualizer.draw_middle_points(i)
-        self.visualizer.draw()
-
-    def on_toggle_show_lines(self):
-        for i in range(self.visualizer.supervisor.get_agvs_number()):
-            self.visualizer.draw_add_lines(i)
+    def on_show_all_clicked(self):
+        if self.btn_show_all.isChecked():
+            self.btn_show_all.setText("Hide All")
+            for i in range(self.visualizer.supervisor.get_agvs_number()):
+                self.visualizer.draw_curve(i)
+                self.visualizer.draw_middle_points(i)
+                self.visualizer.draw_add_lines(i)
+                self.visualizer.draw_coll_sectors()
+        else:
+            self.btn_show_all.setText("Show All")
+            self.visualizer.remove_curves()
+            self.visualizer.remove_middle_points()
+            self.visualizer.remove_lines()
+            self.visualizer.remove_coll_sectors()
         self.visualizer.draw()
 
     def on_load_agv_clicked(self):
