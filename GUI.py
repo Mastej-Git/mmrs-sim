@@ -208,6 +208,14 @@ class GUI(QMainWindow):
 
     def on_show_all_clicked(self):
         if self.btn_show_all.isChecked():
+            self.btn_show_paths.setCheckable(False)
+            self.btn_show_points.setCheckable(False)
+            self.btn_show_lines.setCheckable(False)
+            self.btn_det_col_sec.setCheckable(False)
+            self.btn_show_paths.setText("Hide Paths")
+            self.btn_show_points.setText("Hide Points")
+            self.btn_show_lines.setText("Hide Lines")
+            self.btn_det_col_sec.setText("Hide Coll Sectors")
             self.btn_show_all.setText("Hide All")
             for i in range(self.visualizer.supervisor.get_agvs_number()):
                 self.visualizer.draw_curve(i)
@@ -215,6 +223,14 @@ class GUI(QMainWindow):
                 self.visualizer.draw_add_lines(i)
                 self.visualizer.draw_coll_sectors()
         else:
+            self.btn_show_paths.setCheckable(True)
+            self.btn_show_points.setCheckable(True)
+            self.btn_show_lines.setCheckable(True)
+            self.btn_det_col_sec.setCheckable(True)
+            self.btn_show_paths.setText("Show Paths")
+            self.btn_show_points.setText("Show Points")
+            self.btn_show_lines.setText("Show Lines")
+            self.btn_det_col_sec.setText("Show Coll Sectors")
             self.btn_show_all.setText("Show All")
             self.visualizer.remove_curves()
             self.visualizer.remove_middle_points()
