@@ -200,7 +200,6 @@ class GUI(QMainWindow):
         if self.btn_det_col_sec.isChecked():
             self.btn_det_col_sec.setText("Hide Coll Sectors")
             self.visualizer.draw_coll_sectors()
-        # self.visualizer.draw_one_coll_sector()
         else:
             self.btn_det_col_sec.setText("Show Coll Sectors")
             self.visualizer.remove_coll_sectors()
@@ -242,9 +241,12 @@ class GUI(QMainWindow):
         agvs = self.yaml_agv_loader.load_agvs_yaml()
         self.visualizer.supervisor.load_agvs(agvs)
         self.visualizer.load_agvs_t()
-        self.visualizer.supervisor.trigger_path_creation()
-        self.visualizer.supervisor.detec_col_sectors()
 
+        self.visualizer.supervisor.trigger_path_creation()
+        
+        self.visualizer.supervisor.detec_col_sectors()
+        self.visualizer.supervisor.finalize_agv_sectors()
+        self.visualizer.supervisor.global_merge()
         self.visualizer.supervisor.get_all_control_points()
 
         for i in range(self.visualizer.supervisor.get_agvs_number()):

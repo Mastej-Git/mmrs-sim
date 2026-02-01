@@ -9,7 +9,7 @@ class RobotState:
         # self.path_segments = path_segments
         self.current_t = 0.0
         self.current_curve_idx = 0
-        self.status = "iddling"
+        self.status = "running"
 
         self.R = set()
         self.PH = set()
@@ -24,25 +24,30 @@ class RobotState:
             sector.t_critical = max(0.0, sector.t_l - delta_t_braking)
             sector.t_query = max(0.0, sector.t_critical - 0.05)
 
-    def check_for_events(self, sectors_on_curve):
+    def check_for_events(self, sectors_on_curve, all_path_sectors):
+        num_curves = len(all_path_sectors)
+        
         for sector in sectors_on_curve:
+            if self.current_t >= sector.t_u - 0.001: 
+                is_continued = False
+                if sector.t_u >= 0.999:
+                    next_idx = (self.current_curve_idx + 1) % num_curves
+                    next_sectors = all_path_sectors.get(next_idx, [])
+                    for s_next in next_sectors:
+                        if s_next.t_l <= 0.001 and set(s_next.resource_ids) == set(sector.resource_ids):
+                            is_continued = True
+                            break
+                
+                if not is_continued and any(res in self.PH for res in sector.resource_ids):
+                    return "EVENT_RELEASE", sector.resource_ids
+
             if self.current_t >= sector.t_query and not any(res in self.R for res in sector.resource_ids):
-                self.R.update(sector.resource_ids)
                 return "EVENT_GET_ACCESS", sector.resource_ids
             
-            if sector.t_query <= self.current_t < sector.t_critical:
-                pass
-
-            if self.current_t >= sector.t_critical:
+            if self.current_t >= sector.t_critical and self.current_t < sector.t_u:
                 if not all(res in self.PH for res in sector.resource_ids):
                     self.status = "iddling"
                     return "EVENT_BRAKE", None
-                
-            if self.current_t > sector.t_u and any(res in self.PH for res in sector.resource_ids):
-                released = sector.resource_ids
-                self.PH.difference_update(released)
-                self.R.difference_update(released)
-                return "EVENT_RELEASE", released
             
         return None, None
     

@@ -17,6 +17,7 @@ class RAM:
         if res_id not in self.global_resources:
             self.global_resources[res_id] = Resource(res_id, agv1_id, agv2_id)
         return res_id
+    
 class StageTransitionControl:
 
     def __init__(self):
@@ -48,23 +49,26 @@ class StageTransitionControl:
 
                     for s1, s2 in zip(s1_list, s2_list):
                         for rid in s1.resource_ids:
-                            print(s1.resource_ids)
+                            # print(s1.resource_ids)
                             self.ram.register_collision_pair(rid, agv1.id, agv2.id)
 
                             agv1.add_sector_to_curve(i, s1)
                             agv2.add_sector_to_curve(j, s2)
 
     def process_agv_step(self, agv):
-        event, data = agv.state.check_for_events(agv.get_current_curve_sectors())
+        event, data = agv.state.check_for_events(agv.get_current_curve_sectors(), agv.path_sectors)
 
         if event == "EVENT_GET_ACCESS":
             request_ids = data
+
+            for res_id in request_ids:
+                self.ram.global_resources[res_id].get_access(agv.id)
+                agv.state.R.add(res_id)
+
             can_go_collision = self.check_collision_safety(agv.id, request_ids)
             can_go_deadlock = self.is_state_safe(agv.id, request_ids, [])
 
             if can_go_collision and can_go_deadlock:
-                for res_id in request_ids:
-                    self.ram.global_resources[res_id].get_access(agv.id)
                 agv.state.PH.update(request_ids)
                 agv.state.status = "running"
             else:
@@ -74,6 +78,19 @@ class StageTransitionControl:
             released_ids = data
             for res_id in released_ids:
                 self.ram.global_resources[res_id].release(agv.id)
+            agv.state.PH.difference_update(released_ids)
+            agv.state.R.difference_update(released_ids)
+            agv.state.status = "running"
+
+        elif event is None:
+            if not agv.state.R:
+                agv.state.status = "running"
+
+        if agv.state.status == "iddling":
+          if self.check_collision_safety(agv.id, list(agv.state.R)):
+                if self.is_state_safe(agv.id, list(agv.state.R), []):
+                    agv.state.PH.update(agv.state.R)
+                    agv.state.status = "running"
 
     def get_agvs_number(self) -> int:
         return len(self.agvs)
@@ -156,4 +173,32 @@ class StageTransitionControl:
 
                 for sector in sectors:
                     self.calculate_control_points(agv, sector, curve_len)
-    
+
+    def finalize_agv_sectors(self):
+        for agv in self.agvs:
+            for curve_idx in agv.path_sectors:
+                raw_sectors = agv.path_sectors[curve_idx]
+                merged = self.col_det_alg.merge_sectors(raw_sectors)   
+                agv.path_sectors[curve_idx] = merged
+
+    def global_merge(self):
+        for agv in self.agvs:
+            n = len(agv.path)
+            for i in range(n):
+                next_i = (i + 1) % n
+                if i not in agv.path_sectors or next_i not in agv.path_sectors:
+                    continue
+                
+                curr_s = max(agv.path_sectors[i], key=lambda x: x.t_u) if agv.path_sectors[i] else None
+                next_s = min(agv.path_sectors[next_i], key=lambda x: x.t_l) if agv.path_sectors[next_i] else None
+                
+                if curr_s and next_s:
+                    if set(curr_s.resource_ids) & set(next_s.resource_ids) or \
+                    (curr_s.t_u > 0.8 and next_s.t_l < 0.2):
+                        
+                        curr_s.t_u = 1.0
+                        next_s.t_l = 0.0
+                        
+                        union_res = list(set(curr_s.resource_ids + next_s.resource_ids))
+                        curr_s.resource_ids = union_res
+                        next_s.resource_ids = union_res

@@ -7,6 +7,7 @@ from matplotlib.path import Path
 import matplotlib.patches as patches
 import numpy as np
 from control.StageTransitionControl import StageTransitionControl
+import time
 
 
 class Visualizer(FigureCanvas):
@@ -116,13 +117,6 @@ class Visualizer(FigureCanvas):
         csector, = self.ax.plot(pts[:, 0], pts[:, 1], color="#FF4136", linewidth=6.0, alpha=0.6, solid_capstyle='round', zorder=5)
         self._drawn_elements['csectors'].append(csector)
 
-    # def draw_coll_sectors(self) -> None:
-    #     for sect_pair in self.supervisor.col_sectors:
-    #         sect1 = sect_pair[0]
-    #         sect2 = sect_pair[1]
-    #         self.draw_sector_on_curve(sect1[0].addresses[0], sect1[0].t_l, sect1[0].t_u,)
-    #         self.draw_sector_on_curve(sect2[0].addresses[1], sect2[0].t_l, sect2[0].t_u,)
-
     def draw_coll_sectors(self) -> None:
         self.remove_coll_sectors()
         for agv in self.supervisor.agvs:
@@ -130,6 +124,8 @@ class Visualizer(FigureCanvas):
                 verts = agv.path[curve_idx]
                 for sector in sectors:
                     self.draw_sector_on_curve(verts, sector.t_l, sector.t_u)
+
+                    print(sector)
 
     def remove_coll_sectors(self) -> None:
         for csector in self._drawn_elements['csectors']:
@@ -154,39 +150,32 @@ class Visualizer(FigureCanvas):
         self.visual_agvs.append(agv)
         self.ax.add_patch(self.visual_agvs[i])
 
-    # def update_position_forward(self) -> None:
-    #     for i in range(len(self.supervisor.agvs)):
-    #         self.t[i] += 0.01
-    #         if self.t[i] > 1.0:
-    #             self.t[i] = 0.0
-    #             self.path_idx[i] += 1
-    #             if self.path_idx[i] == len(self.supervisor.agvs[i].path):
-    #                 self.path_idx[i] = 0
-
-    #         new_center = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
-    #         self.visual_agvs[i].center = new_center
-
-    #     self.draw()
-
     def update_position_forward(self) -> None:
         for i, agv in enumerate(self.supervisor.agvs):
             agv.update_position(self.t[i], self.path_idx[i])
-
             self.supervisor.process_agv_step(agv)
 
             if agv.state.status == "running":
-                self.t[i] += 0.01
-            else:
-                pass
+                self.t[i] += 0.02
 
-            if self.t[i] > 1.0:
+            if self.t[i] >= 1.0:
+                agv.update_position(1.0, self.path_idx[i])
+                self.supervisor.process_agv_step(agv)
+                
                 self.t[i] = 0.0
-                self.path_idx[i] += 1
-                if self.path_idx[i] >= len(agv.path):
-                    self.path_idx[i] = 0
+                self.path_idx[i] = (self.path_idx[i] + 1) % len(agv.path)
+                
+                agv.update_position(0.0, self.path_idx[i])
+                self.supervisor.process_agv_step(agv)
 
             new_center = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
             self.visual_agvs[i].center = new_center
+
+        for res_id, res_obj in self.supervisor.ram.global_resources.items():
+            if len(res_obj.priority_list) > 0:
+                print(f"Zasób {res_id} zajęty przez: {res_obj.priority_list}")
+
+        self.draw()
 
     def update_position_back(self) -> None:
         for i in range(len(self.supervisor.agvs)):

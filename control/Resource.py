@@ -14,5 +14,7 @@ class Resource:
             self.priority_list.remove(robot_id)
 
     def is_first(self, robot_id):
-        return len(self.priority_list) > 0 and self.priority_list[0] == robot_id
+        if not self.priority_list:
+            return True
+        return self.priority_list[0] == robot_id
         

@@ -13,6 +13,9 @@ class Sector:
         self.t_querry = None
         self.t_critical = None
 
+    def __str__(self) -> str:
+        return f"t_l: {self.t_l}, t_u: {self.t_u}, resource_id: {self.resource_ids}, is_private: {self.is_private}"
+
 class CollisionSectorAlgorithm:
 
     def get_resource_key(self, agv1_id, curve1_idx, agv2_id, curve2_idx):
@@ -42,30 +45,30 @@ class CollisionSectorAlgorithm:
             return []
 
         sorted_s = sorted(sectors, key=lambda x: x.t_l)
-        
         merged = []
+
         if sorted_s:
             current_sector = Sector(
                 t_l=sorted_s[0].t_l,
                 t_u=sorted_s[0].t_u,
-                resource_ids=[sorted_s[0].resource_ids]
+                resource_ids=list(sorted_s[0].resource_ids)
             )
 
             for next_s in sorted_s[1:]:
                 if next_s.t_l <= current_sector.t_u + 1e-9:
                     current_sector.t_u = max(current_sector.t_u, next_s.t_u)
-                    if next_s.resource_id not in current_sector.resource_id:
-                        current_sector.resource_id.append(next_s.resource_id)
+                    for rid in next_s.resource_ids:
+                        if rid not in current_sector.resource_ids:
+                            current_sector.resource_ids.append(rid)
                 else:
                     merged.append(current_sector)
                     current_sector = Sector(
                         t_l=next_s.t_l,
                         t_u=next_s.t_u,
-                        resource_ids=[next_s.resource_ids]
+                        resource_ids=list(next_s.resource_ids)
                     )
             
             merged.append(current_sector)
-        
         return merged
 
     def find_roots_quartic(self, fixed_point: np.ndarray, verts_other, R: float):
@@ -179,7 +182,7 @@ class CollisionSectorAlgorithm:
         if not (np.all(aabb1_max >= aabb2_min) and np.all(aabb2_max >= aabb1_min)):
             return [], []
 
-        grid_n = 20
+        grid_n = 40
         t = np.linspace(0, 1, grid_n)
         v = np.linspace(0, 1, grid_n)
         T, V = np.meshgrid(t, v)
@@ -214,8 +217,8 @@ class CollisionSectorAlgorithm:
             t_star, v_star = T[idx], V[idx]
 
             tl, tu, vl, vu = self.expand_sector_around_minimum_fast(t_star, v_star, verts1, verts2, R)
-            sectors1.append(Sector(tl, tu, resource_id))
-            sectors2.append(Sector(vl, vu, resource_id))
+            sectors1.append(Sector(tl, tu, [resource_id]))
+            sectors2.append(Sector(vl, vu, [resource_id]))
 
         return self.merge_sectors(sectors1), self.merge_sectors(sectors2)
 
