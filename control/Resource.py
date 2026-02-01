@@ -1,6 +1,6 @@
 class Resource:
 
-    def __init__(self, resource_id: int, path_id_1: int, path_id_2: int):
+    def __init__(self, resource_id, path_id_1: int, path_id_2: int):
         self.id = resource_id
         self.paths = (path_id_1, path_id_2)
         self.priority_list = []

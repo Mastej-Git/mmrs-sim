@@ -244,6 +244,9 @@ class GUI(QMainWindow):
         self.visualizer.load_agvs_t()
         self.visualizer.supervisor.trigger_path_creation()
         self.visualizer.supervisor.detec_col_sectors()
+
+        self.visualizer.supervisor.get_all_control_points()
+
         for i in range(self.visualizer.supervisor.get_agvs_number()):
             self.visualizer.draw_bezier_curve(i)
         self.visualizer.draw()

@@ -15,9 +15,12 @@ class YamlAGVLoader:
         agvs = {}
         for agv_cfg in cfg["agvs"]:
             agv = AGV(
+                agv_id=int(agv_cfg["id"][-1]),
                 marked_states=[tuple(p) for p in agv_cfg["marked_states"]],
                 orientation=tuple(agv_cfg["orientation"]),
                 radius=agv_cfg["radius"],
+                max_v=1,
+                max_a=1,
                 color=agv_cfg["color"],
                 path_color=agv_cfg["path_color"],
             )
