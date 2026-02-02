@@ -24,6 +24,13 @@ class RobotState:
             sector.t_critical = max(0.0, sector.t_l - delta_t_braking)
             sector.t_query = max(0.0, sector.t_critical - 0.05)
 
+    def is_inside_owned_sector(self, sectors_on_curve):
+        for sector in sectors_on_curve:
+            if sector.t_l <= self.current_t <= sector.t_u:
+                if all(res in self.PH for res in sector.resource_ids):
+                    return True
+        return False
+
     def check_for_events(self, sectors_on_curve, all_path_sectors):
         num_curves = len(all_path_sectors)
         
@@ -56,7 +63,6 @@ class RobotState:
 
         for idx in range(self.current_curve_idx, len(all_path_sectors)):
             sectors_on_curve = all_path_sectors[idx]
-
             sorted_sectors = sorted(sectors_on_curve, key=lambda x: x.t_l)
 
             for sector in sorted_sectors:

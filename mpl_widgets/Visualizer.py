@@ -151,22 +151,28 @@ class Visualizer(FigureCanvas):
         self.ax.add_patch(self.visual_agvs[i])
 
     def update_position_forward(self) -> None:
+        dt = 0.05
         for i, agv in enumerate(self.supervisor.agvs):
-            agv.update_position(self.t[i], self.path_idx[i])
+            # agv.update_position(self.t[i], self.path_idx[i])
             self.supervisor.process_agv_step(agv)
 
-            if agv.state.status == "running":
-                self.t[i] += 0.02
+            # if agv.state.status == "running":
+            #     self.t[i] += 0.02
 
-            if self.t[i] >= 1.0:
-                agv.update_position(1.0, self.path_idx[i])
-                self.supervisor.process_agv_step(agv)
+            # if self.t[i] >= 1.0:
+            #     agv.update_position(1.0, self.path_idx[i])
+            #     self.supervisor.process_agv_step(agv)
                 
-                self.t[i] = 0.0
-                self.path_idx[i] = (self.path_idx[i] + 1) % len(agv.path)
+            #     self.t[i] = 0.0
+            #     self.path_idx[i] = (self.path_idx[i] + 1) % len(agv.path)
                 
-                agv.update_position(0.0, self.path_idx[i])
-                self.supervisor.process_agv_step(agv)
+            #     agv.update_position(0.0, self.path_idx[i])
+            #     self.supervisor.process_agv_step(agv)
+
+            agv.step(dt)
+            
+            self.t[i] = agv.state.current_t
+            self.path_idx[i] = agv.state.current_curve_idx
 
             new_center = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
             self.visual_agvs[i].center = new_center

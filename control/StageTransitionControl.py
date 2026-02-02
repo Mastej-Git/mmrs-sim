@@ -56,7 +56,21 @@ class StageTransitionControl:
                             agv2.add_sector_to_curve(j, s2)
 
     def process_agv_step(self, agv):
+        current_sectors = agv.get_current_curve_sectors()
+
+        if agv.state.is_inside_owned_sector(current_sectors):
+            agv.state.status = "running"
+            event, data = agv.state.check_for_events(current_sectors, agv.path_sectors)
+            if event == "EVENT_RELEASE":
+                released_ids = data
+                for res_id in released_ids:
+                    self.ram.global_resources[res_id].release(agv.id)
+                agv.state.PH.difference_update(released_ids)
+                agv.state.R.difference_update(released_ids)
+            return
+
         event, data = agv.state.check_for_events(agv.get_current_curve_sectors(), agv.path_sectors)
+
 
         if event == "EVENT_GET_ACCESS":
             request_ids = data
@@ -107,6 +121,8 @@ class StageTransitionControl:
 
     def trigger_path_creation(self) -> None:
         self.create_paths()
+        for agv in self.agvs:
+            agv.init_path_lengths()
 
     def check_collision_safety(self, robot_id, requested_resource_ids):
         for res_id in requested_resource_ids:

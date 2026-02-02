@@ -6,7 +6,7 @@ from control.AGV import AGV
 class YamlAGVLoader:
 
     def __init__(self):
-        self.file_name = "agvs.yaml"
+        self.file_name = "agvs_desc/simple_deadlock.yaml"
 
     def load_agvs_yaml(self):
         with open("agvs.yaml") as f:
@@ -19,8 +19,8 @@ class YamlAGVLoader:
                 marked_states=[tuple(p) for p in agv_cfg["marked_states"]],
                 orientation=tuple(agv_cfg["orientation"]),
                 radius=agv_cfg["radius"],
-                max_v=1,
-                max_a=1,
+                max_v=float(agv_cfg["max_v"]),
+                max_a=float(agv_cfg["max_a"]),
                 color=agv_cfg["color"],
                 path_color=agv_cfg["path_color"],
             )

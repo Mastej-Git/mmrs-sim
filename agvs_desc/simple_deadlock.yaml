@@ -1,0 +1,33 @@
+agvs:
+  - id: agv0
+    marked_states:
+      - [3, 15]
+      - [22, 15]
+    orientation: [0, 1]
+    radius: 0.5
+    max_v: 2
+    max_a: 1
+    color: "#12700EFF"
+    path_color: "#17D220"
+
+  - id: agv1
+    marked_states: 
+      - [20, 20]
+      - [7, 5]
+    orientation: [0, 1]
+    radius: 0.5
+    max_v: 2
+    max_a: 1
+    color: "#330DCEFF"
+    path_color: "#2F75CB"
+
+  - id: agv2
+    marked_states:
+      - [20, 5]
+      - [5, 20]
+    orientation: [0, -1]
+    radius: 0.5
+    max_v: 2
+    max_a: 1
+    color: "#E36F10"
+    path_color: "#CF8040"
