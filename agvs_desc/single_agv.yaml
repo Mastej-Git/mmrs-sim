@@ -17,8 +17,8 @@ agvs:
       # - [12, 1] 
     orientation: [0, 1]
     radius: 0.5
-    max_v: 2
-    max_a: 1
+    max_v: 1.5
+    max_a: 0.5
     color: "#12700EFF"
     path_color: "#17D220"
     

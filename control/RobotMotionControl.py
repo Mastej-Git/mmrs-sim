@@ -11,15 +11,19 @@ class RobotMotionControl:
     def compute_velocity(self, target_speed, dt):
         curr_status = self.robot.state.status
         
-        if curr_status == "iddling":
+        if curr_status == "iddling" or curr_status == "finished":
             return 0.0
         
         max_a = self.robot.state.max_a
         max_v = self.robot.state.max_v
 
         max_delta_v = max_a * dt
-
         velocity_diff = target_speed - self.current_velocity
+
+        if velocity_diff > 0:
+            max_delta_v = max_a * dt
+        else:
+            max_delta_v = max_a * dt * 1.5
 
         if abs(velocity_diff) <= max_delta_v:
             self.current_velocity = target_speed
