@@ -17,4 +17,11 @@ class Resource:
         if not self.priority_list:
             return True
         return self.priority_list[0] == robot_id
-        
+    
+    def get_position(self, robot_id):
+        if robot_id not in self.priority_list:
+            return -1
+        return self.priority_list.index(robot_id)
+    
+    def __repr__(self):
+        return f"Resource({self.id}, queue={self.priority_list})"

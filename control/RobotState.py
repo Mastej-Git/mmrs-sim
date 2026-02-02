@@ -38,8 +38,16 @@ class RobotState:
                     return True
         return False
 
+    def is_inside_any_sector(self, sectors_on_curve):
+        for sector in sectors_on_curve:
+            if sector.t_l <= self.current_t <= sector.t_u:
+                return True, sector
+        return False, None
+
     def check_for_events(self, sectors_on_curve, all_path_sectors):
         num_curves = len(all_path_sectors)
+
+        events = []
         
         for sector in sectors_on_curve:
             if self.current_t >= sector.t_u - 0.001: 
@@ -52,35 +60,82 @@ class RobotState:
                             is_continued = True
                             break
                 
-                if not is_continued and any(res in self.PH for res in sector.resource_ids):
-                    return "EVENT_RELEASE", sector.resource_ids
+                if not is_continued:
+                    resources_to_release = [r for r in sector.resource_ids if r in self.PH]
+                    if resources_to_release:
+                        events.append(("EVENT_RELEASE", resources_to_release, sector.t_u))
 
-            if self.current_t >= sector.t_query and not any(res in self.R for res in sector.resource_ids):
-                return "EVENT_GET_ACCESS", sector.resource_ids
+            if self.current_t >= sector.t_query and self.current_t < sector.t_l:
+                resources_needed = [r for r in sector.resource_ids if r not in self.PH]
+                if resources_needed and not any(r in self.R for r in resources_needed):
+                    events.append(("EVENT_GET_ACCESS", sector.resource_ids, sector.t_query))
             
-            if self.current_t >= sector.t_critical and self.current_t < sector.t_u:
+            if self.current_t >= sector.t_critical and self.current_t < sector.t_l:
                 if not all(res in self.PH for res in sector.resource_ids):
-                    self.status = "iddling"
-                    return "EVENT_BRAKE", None
+                    events.append(("EVENT_BRAKE", sector.resource_ids, sector.t_critical))
+
+        for event_type in ["EVENT_RELEASE", "EVENT_GET_ACCESS", "EVENT_BRAKE"]:
+            for event in events:
+                if event[0] == event_type:
+                    return event[0], event[1]
             
         return None, None
     
     def get_sectors_until_next_private(self, all_path_sectors):
         needed_sectors = []
-
-        for idx in range(self.current_curve_idx, len(all_path_sectors)):
-            sectors_on_curve = all_path_sectors[idx]
-            sorted_sectors = sorted(sectors_on_curve, key=lambda x: x.t_l)
-
-            for sector in sorted_sectors:
-                if idx > self.current_curve_idx or sector.t_l > self.current_t:
-                    needed_sectors.append(sector)
-
-            if not any(s.t_l > self.current_t for s in sorted_sectors):
+        num_curves = len(all_path_sectors)
+        
+        for i in range(num_curves):
+            curve_idx = (self.current_curve_idx + i) % num_curves
+            
+            if curve_idx not in all_path_sectors:
                 break
-
+                
+            sectors_on_curve = all_path_sectors.get(curve_idx, [])
+            sorted_sectors = sorted(sectors_on_curve, key=lambda x: x.t_l)
+            
+            found_private = False
+            for sector in sorted_sectors:
+                if i == 0 and sector.t_u <= self.current_t:
+                    continue
+                    
+                if i == 0 and sector.t_l <= self.current_t <= sector.t_u:
+                    needed_sectors.append(sector)
+                    continue
+                
+                if i > 0 or sector.t_l > self.current_t:
+                    needed_sectors.append(sector)
+            
+            if sorted_sectors:
+                last_sector = sorted_sectors[-1]
+                if i == 0 and self.current_t > last_sector.t_u:
+                    found_private = True
+                elif i > 0 and last_sector.t_u < 0.99:
+                    found_private = True
+            else:
+                found_private = True
+            
+            if found_private and i > 0:
+                break
+        
         return needed_sectors
     
+    def get_upcoming_sectors(self, all_path_sectors, lookahead_curves=2):
+        upcoming = []
+        num_curves = len(all_path_sectors)
+        
+        for i in range(lookahead_curves):
+            curve_idx = (self.current_curve_idx + i) % num_curves
+            if curve_idx in all_path_sectors:
+                for sector in all_path_sectors[curve_idx]:
+                    if i == 0:
+                        if sector.t_l > self.current_t:
+                            upcoming.append((curve_idx, sector))
+                    else:
+                        upcoming.append((curve_idx, sector))
+        
+        return upcoming
+
     def in_private_sector(self, current_curve_sector):
         for sector in current_curve_sector:
             if sector.t_l <= self.current_t <= sector.t_u:

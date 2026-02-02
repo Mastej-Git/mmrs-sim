@@ -36,6 +36,9 @@ class StageTransitionControl:
 
     def detec_col_sectors(self):
         self.ram = RAM()
+        for agv in self.agvs:
+            agv.path_sectors = {}
+            
         for agv1, agv2 in combinations(self.agvs, 2):
             for i in range(len(agv1.path)):
                 for j in range(len(agv2.path)):
@@ -49,62 +52,81 @@ class StageTransitionControl:
 
                     for s1, s2 in zip(s1_list, s2_list):
                         for rid in s1.resource_ids:
-                            # print(s1.resource_ids)
                             self.ram.register_collision_pair(rid, agv1.id, agv2.id)
-
                             agv1.add_sector_to_curve(i, s1)
                             agv2.add_sector_to_curve(j, s2)
 
     def process_agv_step(self, agv):
         current_sectors = agv.get_current_curve_sectors()
 
+        print(f"AGV{agv.id}: t={agv.state.current_t:.2f}, curve={agv.state.current_curve_idx}, "
+            f"status={agv.state.status}, R={agv.state.R}, PH={agv.state.PH}")
+        
         if agv.state.is_inside_owned_sector(current_sectors):
             agv.state.status = "running"
-            event, data = agv.state.check_for_events(current_sectors, agv.path_sectors)
-            if event == "EVENT_RELEASE":
-                released_ids = data
-                for res_id in released_ids:
-                    self.ram.global_resources[res_id].release(agv.id)
-                agv.state.PH.difference_update(released_ids)
-                agv.state.R.difference_update(released_ids)
+            self._check_release(agv, current_sectors)
+            return
+        
+        is_inside, sector = agv.state.is_inside_any_sector(current_sectors)
+        if is_inside and not all(r in agv.state.PH for r in sector.resource_ids):
+            agv.state.status = "iddling"
+            self._request_resources(agv, sector.resource_ids)
             return
 
-        event, data = agv.state.check_for_events(agv.get_current_curve_sectors(), agv.path_sectors)
+        event, data = agv.state.check_for_events(current_sectors, agv.path_sectors)
 
-
-        if event == "EVENT_GET_ACCESS":
-            request_ids = data
-
-            for res_id in request_ids:
-                self.ram.global_resources[res_id].get_access(agv.id)
-                agv.state.R.add(res_id)
-
-            can_go_collision = self.check_collision_safety(agv.id, request_ids)
-            can_go_deadlock = self.is_state_safe(agv.id, request_ids, [])
-
-            if can_go_collision and can_go_deadlock:
-                agv.state.PH.update(request_ids)
-                agv.state.status = "running"
-            else:
-                agv.state.status = "iddling"
-
-        elif event == "EVENT_RELEASE":
-            released_ids = data
-            for res_id in released_ids:
-                self.ram.global_resources[res_id].release(agv.id)
-            agv.state.PH.difference_update(released_ids)
-            agv.state.R.difference_update(released_ids)
+        if event == "EVENT_RELEASE":
+            self._release_resources(agv, data)
             agv.state.status = "running"
 
-        elif event is None:
-            if not agv.state.R:
-                agv.state.status = "running"
+        elif event == "EVENT_GET_ACCESS":
+            self._request_resources(agv, data)
+            
+        elif event == "EVENT_BRAKE":
+            agv.state.status = "iddling"
 
-        if agv.state.status == "iddling":
-          if self.check_collision_safety(agv.id, list(agv.state.R)):
-                if self.is_state_safe(agv.id, list(agv.state.R), []):
-                    agv.state.PH.update(agv.state.R)
-                    agv.state.status = "running"
+        elif event is None:
+            if not agv.state.R or all(r in agv.state.PH for r in agv.state.R):
+                agv.state.status = "running"
+        
+        if agv.state.status == "iddling" and agv.state.R:
+            self._try_acquire_resources(agv)
+
+    def _request_resources(self, agv, resource_ids):
+        for res_id in resource_ids:
+            if res_id not in agv.state.R:
+                self.ram.global_resources[res_id].get_access(agv.id)
+                agv.state.R.add(res_id)
+        
+        self._try_acquire_resources(agv)
+
+    def _try_acquire_resources(self, agv):
+        pending = [r for r in agv.state.R if r not in agv.state.PH]
+        
+        if not pending:
+            agv.state.status = "running"
+            return
+        
+        can_go_collision = self.check_collision_safety(agv.id, pending)
+        can_go_deadlock = self.is_state_safe(agv.id, pending, [])
+        
+        if can_go_collision and can_go_deadlock:
+            agv.state.PH.update(pending)
+            agv.state.status = "running"
+        else:
+            agv.state.status = "iddling"
+
+    def _release_resources(self, agv, resource_ids):
+        for res_id in resource_ids:
+            if res_id in agv.state.PH:
+                self.ram.global_resources[res_id].release(agv.id)
+                agv.state.PH.discard(res_id)
+                agv.state.R.discard(res_id)
+
+    def _check_release(self, agv, current_sectors):
+        event, data = agv.state.check_for_events(current_sectors, agv.path_sectors)
+        if event == "EVENT_RELEASE":
+            self._release_resources(agv, data)
 
     def get_agvs_number(self) -> int:
         return len(self.agvs)
@@ -113,7 +135,7 @@ class StageTransitionControl:
         braking_dist = (agv.state.max_v ** 2) / (2 * agv.state.max_a)
         delta_t_braking = braking_dist / curve_length
         sector.t_critical = max(0.0, sector.t_l - delta_t_braking)
-        sector.t_query = max(0.0, sector.t_critical - 0.05)
+        sector.t_query = max(0.0, sector.t_critical - 0.1)
 
     def load_agvs(self, loaded_agvs: dict[str, AGV]) -> None:
         for agv in loaded_agvs.values():
@@ -133,38 +155,50 @@ class StageTransitionControl:
     
     def can_reach_private_state(self, robot_id, temp_resources_map):
         agv = self.agvs[robot_id]
-        if agv.state.in_private_sector(agv.get_current_curve_sectors()):
+        current_sectors = agv.get_current_curve_sectors()
+        
+        if agv.state.in_private_sector(current_sectors):
             return True
         
         future_sectors = agv.state.get_sectors_until_next_private(agv.path_sectors)
-
+        
         for sector in future_sectors:
             for res_id in sector.resource_ids:
+                if res_id not in temp_resources_map:
+                    continue
                 res = temp_resources_map[res_id]
                 if not res.is_first(robot_id):
                     return False
+        
         return True
     
     def is_state_safe(self, robot_id, res_to_access, res_to_release):
         temp_ram = copy.deepcopy(self.ram)
 
         for res_id in res_to_access:
-            temp_ram.global_resources[res_id].get_access(robot_id)
+            if res_id in temp_ram.global_resources:
+                temp_ram.global_resources[res_id].get_access(robot_id)
         for res_id in res_to_release:
-            temp_ram.global_resources[res_id].release(robot_id)
+            if res_id in temp_ram.global_resources:
+                temp_ram.global_resources[res_id].release(robot_id)
 
-        remaining_robots = [agv.id for agv in self.agvs]
-        changed = True
-
-        while changed and remaining_robots:
-            changed = False
-            for r_id in remaining_robots:
+        remaining_robots = [agv.id for agv in self.agvs if agv.state.status != "finished"]
+        max_iterations = len(remaining_robots) * 2
+        iterations = 0
+        
+        while remaining_robots and iterations < max_iterations:
+            iterations += 1
+            progress = False
+            
+            for r_id in remaining_robots[:]:  # Kopia listy do iteracji
                 if self.can_reach_private_state(r_id, temp_ram.global_resources):
-                    for res in temp_ram.global_resources.values(): 
+                    for res in temp_ram.global_resources.values():
                         res.release(r_id)
                     remaining_robots.remove(r_id)
-                    changed = True
-                    break
+                    progress = True
+            
+            if not progress:
+                break
 
         return len(remaining_robots) == 0
     
@@ -225,3 +259,11 @@ class StageTransitionControl:
 
         for res_id, res_obj in self.ram.global_resources.items():
             res_obj.priority_list = []
+            
+    def step_all(self, dt):
+        for agv in self.agvs:
+            if agv.state.status != "finished":
+                self.process_agv_step(agv)
+        
+        for agv in self.agvs:
+            agv.step(dt)
