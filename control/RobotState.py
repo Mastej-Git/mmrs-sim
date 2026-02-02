@@ -6,7 +6,6 @@ class RobotState:
         self.max_v = max_v
         self.max_a = max_a
         
-        # self.path_segments = path_segments
         self.current_t = 0.0
         self.current_curve_idx = 0
         self.status = "running"
