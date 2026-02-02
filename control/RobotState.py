@@ -14,6 +14,13 @@ class RobotState:
         self.R = set()
         self.PH = set()
 
+    def reset(self):
+        self.current_t = 0.0
+        self.current_curve_idx = 0
+        self.status = "running"
+        self.R = set()
+        self.PH = set()
+
     def needs_resources(self):
         return [r for r in self.R if r not in self.PH]
     

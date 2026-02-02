@@ -11,7 +11,7 @@ class StagePassControl:
         
         if status == "running":
             self.target_v = max_v
-        elif status == "iddling":
+        elif status == "iddling" or status == "finished":
             self.target_v = 0.0
             
         return self.target_v

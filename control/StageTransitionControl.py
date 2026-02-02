@@ -218,3 +218,10 @@ class StageTransitionControl:
                         union_res = list(set(curr_s.resource_ids + next_s.resource_ids))
                         curr_s.resource_ids = union_res
                         next_s.resource_ids = union_res
+
+    def reset_all(self):
+        for agv in self.agvs:
+            agv.reset()
+
+        for res_id, res_obj in self.ram.global_resources.items():
+            res_obj.priority_list = []

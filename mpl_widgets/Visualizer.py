@@ -184,27 +184,41 @@ class Visualizer(FigureCanvas):
         self.draw()
 
     def update_position_back(self) -> None:
-        for i in range(len(self.supervisor.agvs)):
-            self.t[i] -= 0.01
-            if self.t[i] < 0.0:
-                self.t[i] = 1.0
-                self.path_idx[i] -= 1
-                if self.path_idx[i] == -1:
-                    self.path_idx[i] = len(self.supervisor.agvs[i].path) - 1
+        self.timer.stop()
+        self.simulation_f = False
 
-            new_center = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
-            self.visual_agvs[i].center = new_center
+        for i, agv in enumerate(self.supervisor.agvs):
+            agv.reset()
+            
+            self.t[i] = 0.0
+            self.path_idx[i] = 0
 
+            if agv.path:
+                starting_point = self.bezier_point(0.0, agv.path[0])
+                self.visual_agvs[i].center = starting_point
+        
+        for res_id, res_obj in self.supervisor.ram.global_resources.items():
+            res_obj.priority_list = []
+        
         self.draw()
 
     def reset_simulation(self) -> None:
-        for i in range(len(self.supervisor.agvs)):
-            self.t[i] = 0
+        self.timer.stop()
+        self.simulation_f = False
+        
+        for i, agv in enumerate(self.supervisor.agvs):
+            agv.reset()
+            
+            self.t[i] = 0.0
             self.path_idx[i] = 0
 
-            starting_point = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
-            self.visual_agvs[i].center = starting_point
-
+            if agv.path:
+                starting_point = self.bezier_point(0.0, agv.path[0])
+                self.visual_agvs[i].center = starting_point
+        
+        for res_id, res_obj in self.supervisor.ram.global_resources.items():
+            res_obj.priority_list = []
+        
         self.draw()
             
     
@@ -225,4 +239,7 @@ class Visualizer(FigureCanvas):
 
         elif event.key() == Qt.Key_Left:
             self.update_position_back()
+
+        elif event.key() == Qt.Key_R:
+            self.reset_simulation()
 

@@ -164,6 +164,8 @@ class GUI(QMainWindow):
         self.visualizer.simulation_f = False
 
     def on_reset_clicked(self):
+        self.btn_run.setEnabled(True)
+        self.btn_pause.setEnabled(False)
         self.visualizer.reset_simulation()
 
     def on_show_paths_clicked(self):

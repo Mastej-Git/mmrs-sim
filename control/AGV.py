@@ -78,15 +78,48 @@ class AGV:
         return self.path_lengths[idx] if idx < len(self.path_lengths) else 1.0
 
     def step(self, dt):
-        v_target = self.stage_pass.get_setpoint()
+        if not self.path:
+            return
         
+        if self.state.current_curve_idx >= len(self.path) - 1 and self.state.current_t >= 1.0:
+            self.state.status = "finished"
+            self.state.current_t = 1.0
+            self.t = 1.0
+            return
+        
+        if self.state.status == "finished":
+            return
+
+        v_target = self.stage_pass.get_setpoint()
         v_actual = self.motion_controller.compute_velocity(v_target, dt)
         
         L = self.get_current_curve_length(self.state.current_curve_idx)
-        delta_t = (v_actual * dt) / L
-        
+        if L > 0:
+            delta_t = (v_actual * dt) / L
+        else:
+            delta_t = 0.0
+
         self.state.current_t += delta_t
+        self.t = self.state.current_t
         
         if self.state.current_t >= 1.0:
-            self.state.current_t = 0.0
-            self.state.current_curve_idx = (self.state.current_curve_idx + 1) % len(self.path)
+            next_curve_idx = self.state.current_curve_idx + 1
+            
+            if next_curve_idx >= len(self.path):
+                self.state.current_t = 1.0
+                self.t = 1.0
+                self.state.status = "finished"
+            else:
+                self.state.current_t = 0.0
+                self.t = 0.0
+                self.state.current_curve_idx = next_curve_idx
+
+
+    def reset(self):
+        self.t = 0.0
+        self.state.current_t = 0.0
+        self.state.current_curve_idx = 0
+        self.state.status = "running"
+        self.state.R = set()
+        self.state.PH = set()
+        self.motion_controller.reset()
