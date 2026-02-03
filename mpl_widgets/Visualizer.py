@@ -124,8 +124,7 @@ class Visualizer(FigureCanvas):
                 verts = agv.path[curve_idx]
                 for sector in sectors:
                     self.draw_sector_on_curve(verts, sector.t_l, sector.t_u)
-
-                    print(sector)
+                    # print(sector)
 
     def remove_coll_sectors(self) -> None:
         for csector in self._drawn_elements['csectors']:
@@ -177,9 +176,9 @@ class Visualizer(FigureCanvas):
             new_center = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
             self.visual_agvs[i].center = new_center
 
-        for res_id, res_obj in self.supervisor.ram.global_resources.items():
-            if len(res_obj.priority_list) > 0:
-                print(f"Zasób {res_id} zajęty przez: {res_obj.priority_list}")
+        # for res_id, res_obj in self.supervisor.ram.global_resources.items():
+        #     if len(res_obj.priority_list) > 0:
+        #         print(f"Zasób {res_id} zajęty przez: {res_obj.priority_list}")
 
         self.draw()
 

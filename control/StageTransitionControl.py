@@ -59,8 +59,8 @@ class StageTransitionControl:
     def process_agv_step(self, agv):
         current_sectors = agv.get_current_curve_sectors()
 
-        print(f"AGV{agv.id}: t={agv.state.current_t:.2f}, curve={agv.state.current_curve_idx}, "
-            f"status={agv.state.status}, R={agv.state.R}, PH={agv.state.PH}")
+        # print(f"AGV{agv.id}: t={agv.state.current_t:.2f}, curve={agv.state.current_curve_idx}, "
+        #     f"status={agv.state.status}, R={agv.state.R}, PH={agv.state.PH}")
         
         if agv.state.is_inside_owned_sector(current_sectors):
             agv.state.status = "running"
