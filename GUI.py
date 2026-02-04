@@ -54,7 +54,7 @@ class GUI(QMainWindow):
         self.tab3 = QWidget()
         self.tabs.addTab(self.tab1, "Simulation")
         self.tabs.addTab(self.tab2, "Statistics")
-        self.tabs.addTab(self.tab3, "Tab 3")
+        self.tabs.addTab(self.tab3, "")
 
         self.visualizer = Visualizer(self, width=5, height=4, dpi=100)
         self.yaml_agv_loader = YamlAGVLoader()
