@@ -7,6 +7,7 @@ from matplotlib.path import Path
 import matplotlib.patches as patches
 import numpy as np
 from control.StageTransitionControl import StageTransitionControl
+import time
 
 
 class Visualizer(FigureCanvas):
@@ -117,11 +118,13 @@ class Visualizer(FigureCanvas):
         self._drawn_elements['csectors'].append(csector)
 
     def draw_coll_sectors(self) -> None:
-        for sect_pair in self.supervisor.col_sectors:
-            sect1 = sect_pair[0]
-            sect2 = sect_pair[1]
-            self.draw_sector_on_curve(sect1[0].addresses[0], sect1[0].t_l, sect1[0].t_u,)
-            self.draw_sector_on_curve(sect2[0].addresses[1], sect2[0].t_l, sect2[0].t_u,)
+        self.remove_coll_sectors()
+        for agv in self.supervisor.agvs:
+            for curve_idx, sectors in agv.path_sectors.items():
+                verts = agv.path[curve_idx]
+                for sector in sectors:
+                    self.draw_sector_on_curve(verts, sector.t_l, sector.t_u)
+                    # print(sector)
 
     def remove_coll_sectors(self) -> None:
         for csector in self._drawn_elements['csectors']:
@@ -147,41 +150,74 @@ class Visualizer(FigureCanvas):
         self.ax.add_patch(self.visual_agvs[i])
 
     def update_position_forward(self) -> None:
-        for i in range(len(self.supervisor.agvs)):
-            self.t[i] += 0.01
-            if self.t[i] > 1.0:
-                self.t[i] = 0.0
-                self.path_idx[i] += 1
-                if self.path_idx[i] == len(self.supervisor.agvs[i].path):
-                    self.path_idx[i] = 0
+        dt = 0.05
+        for i, agv in enumerate(self.supervisor.agvs):
+            # agv.update_position(self.t[i], self.path_idx[i])
+            self.supervisor.process_agv_step(agv)
+
+            # if agv.state.status == "running":
+            #     self.t[i] += 0.02
+
+            # if self.t[i] >= 1.0:
+            #     agv.update_position(1.0, self.path_idx[i])
+            #     self.supervisor.process_agv_step(agv)
+                
+            #     self.t[i] = 0.0
+            #     self.path_idx[i] = (self.path_idx[i] + 1) % len(agv.path)
+                
+            #     agv.update_position(0.0, self.path_idx[i])
+            #     self.supervisor.process_agv_step(agv)
+
+            agv.step(dt)
+            
+            self.t[i] = agv.state.current_t
+            self.path_idx[i] = agv.state.current_curve_idx
 
             new_center = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
             self.visual_agvs[i].center = new_center
+
+        # for res_id, res_obj in self.supervisor.ram.global_resources.items():
+        #     if len(res_obj.priority_list) > 0:
+        #         print(f"Zasób {res_id} zajęty przez: {res_obj.priority_list}")
 
         self.draw()
 
     def update_position_back(self) -> None:
-        for i in range(len(self.supervisor.agvs)):
-            self.t[i] -= 0.01
-            if self.t[i] < 0.0:
-                self.t[i] = 1.0
-                self.path_idx[i] -= 1
-                if self.path_idx[i] == -1:
-                    self.path_idx[i] = len(self.supervisor.agvs[i].path) - 1
+        self.timer.stop()
+        self.simulation_f = False
 
-            new_center = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
-            self.visual_agvs[i].center = new_center
+        for i, agv in enumerate(self.supervisor.agvs):
+            agv.reset()
+            
+            self.t[i] = 0.0
+            self.path_idx[i] = 0
 
+            if agv.path:
+                starting_point = self.bezier_point(0.0, agv.path[0])
+                self.visual_agvs[i].center = starting_point
+        
+        for res_id, res_obj in self.supervisor.ram.global_resources.items():
+            res_obj.priority_list = []
+        
         self.draw()
 
     def reset_simulation(self) -> None:
-        for i in range(len(self.supervisor.agvs)):
-            self.t[i] = 0
+        self.timer.stop()
+        self.simulation_f = False
+        
+        for i, agv in enumerate(self.supervisor.agvs):
+            agv.reset()
+            
+            self.t[i] = 0.0
             self.path_idx[i] = 0
 
-            starting_point = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
-            self.visual_agvs[i].center = starting_point
-
+            if agv.path:
+                starting_point = self.bezier_point(0.0, agv.path[0])
+                self.visual_agvs[i].center = starting_point
+        
+        for res_id, res_obj in self.supervisor.ram.global_resources.items():
+            res_obj.priority_list = []
+        
         self.draw()
             
     
@@ -202,4 +238,7 @@ class Visualizer(FigureCanvas):
 
         elif event.key() == Qt.Key_Left:
             self.update_position_back()
+
+        elif event.key() == Qt.Key_R:
+            self.reset_simulation()
 

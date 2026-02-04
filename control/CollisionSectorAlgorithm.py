@@ -3,14 +3,24 @@ from dataclasses import dataclass
 from scipy.ndimage import label
 
 
-@dataclass
 class Sector:
-    t_l: float
-    t_u: float
-    addresses: list[list]
+    def __init__(self, t_l, t_u, resource_ids):    
+        self.t_l = t_l
+        self.t_u = t_u
+        self.resource_ids = resource_ids
+        self.is_private = len(resource_ids) == 0
 
+        self.t_querry = None
+        self.t_critical = None
+
+    def __str__(self) -> str:
+        return f"t_l: {self.t_l}, t_u: {self.t_u}, resource_id: {self.resource_ids}, is_private: {self.is_private}"
 
 class CollisionSectorAlgorithm:
+
+    def get_resource_key(self, agv1_id, curve1_idx, agv2_id, curve2_idx):
+        pair = sorted([(agv1_id, curve1_idx), (agv2_id, curve2_idx)])
+        return f"res_{pair[0][0]}_{pair[0][1]}_x_{pair[1][0]}_{pair[1][1]}"
 
     def get_bezier_aabb(self, verts, padding=0.0):
         p0, p1, p2 = map(np.array, verts)
@@ -29,6 +39,37 @@ class CollisionSectorAlgorithm:
                 
         pts = np.array(candidates)
         return np.min(pts, axis=0) - padding, np.max(pts, axis=0) + padding
+    
+    def merge_sectors(self, sectors: list[Sector]) -> list[Sector]:
+        if not sectors:
+            return []
+
+        sorted_s = sorted(sectors, key=lambda x: x.t_l)
+        merged = []
+
+        if sorted_s:
+            current_sector = Sector(
+                t_l=sorted_s[0].t_l,
+                t_u=sorted_s[0].t_u,
+                resource_ids=list(sorted_s[0].resource_ids)
+            )
+
+            for next_s in sorted_s[1:]:
+                if next_s.t_l <= current_sector.t_u + 1e-9:
+                    current_sector.t_u = max(current_sector.t_u, next_s.t_u)
+                    for rid in next_s.resource_ids:
+                        if rid not in current_sector.resource_ids:
+                            current_sector.resource_ids.append(rid)
+                else:
+                    merged.append(current_sector)
+                    current_sector = Sector(
+                        t_l=next_s.t_l,
+                        t_u=next_s.t_u,
+                        resource_ids=list(next_s.resource_ids)
+                    )
+            
+            merged.append(current_sector)
+        return merged
 
     def find_roots_quartic(self, fixed_point: np.ndarray, verts_other, R: float):
         p0, p1, p2 = map(np.array, verts_other)
@@ -132,7 +173,7 @@ class CollisionSectorAlgorithm:
 
         return extremes[1][0], extremes[1][1], extremes[2][0], extremes[2][1]
     
-    def process_curve_pair_multi(self, verts1, verts2, r1: float, r2: float, emergency_factor: float=1.1):
+    def process_curve_pair_multi(self, agv1_id, c1_idx, verts1, agv2_id, c2_idx, verts2, r1: float, r2: float, emergency_factor: float=1.1):
         R = (r1 + r2) * emergency_factor
         R_sq = R**2
         
@@ -141,7 +182,7 @@ class CollisionSectorAlgorithm:
         if not (np.all(aabb1_max >= aabb2_min) and np.all(aabb2_max >= aabb1_min)):
             return [], []
 
-        grid_n = 20
+        grid_n = 40
         t = np.linspace(0, 1, grid_n)
         v = np.linspace(0, 1, grid_n)
         T, V = np.meshgrid(t, v)
@@ -162,6 +203,8 @@ class CollisionSectorAlgorithm:
             return [], []
 
         labeled_array, num_features = label(mask)
+
+        resource_id = self.get_resource_key(agv1_id, c1_idx, agv2_id, c2_idx)
         
         sectors1, sectors2 = [], []
         pair_id = [verts1, verts2]
@@ -174,21 +217,8 @@ class CollisionSectorAlgorithm:
             t_star, v_star = T[idx], V[idx]
 
             tl, tu, vl, vu = self.expand_sector_around_minimum_fast(t_star, v_star, verts1, verts2, R)
-            sectors1.append(Sector(tl, tu, pair_id))
-            sectors2.append(Sector(vl, vu, pair_id))
+            sectors1.append(Sector(tl, tu, [resource_id]))
+            sectors2.append(Sector(vl, vu, [resource_id]))
 
-        def merge_sectors(sectors):
-            if not sectors: return []
-            sorted_s = sorted(sectors, key=lambda x: x.t_l)
-            merged = [sorted_s[0]]
-            for curr in sorted_s[1:]:
-                prev = merged[-1]
-                if curr.t_l <= prev.t_u + 1e-9:
-                    prev.t_u = max(prev.t_u, curr.t_u)
-                    prev.addresses = curr.addresses
-                else:
-                    merged.append(curr)
-            return merged
-
-        return merge_sectors(sectors1), merge_sectors(sectors2)
+        return self.merge_sectors(sectors1), self.merge_sectors(sectors2)
 
