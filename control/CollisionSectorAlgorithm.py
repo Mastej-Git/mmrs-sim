@@ -91,7 +91,6 @@ class CollisionSectorAlgorithm:
         return sorted(list(set(np.round(valid, 8))))
 
     def get_closest_t_to_point(self, point: np.ndarray, verts: list[tuple[float, float]]) -> float:
-        """Finds the parameter t on curve 'verts' closest to 'point'."""
         p0, p1, p2 = map(np.array, verts)
 
         A = p0 - 2*p1 + p2
