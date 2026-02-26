@@ -6,14 +6,18 @@ from control.AGV import AGV
 class YamlAGVLoader:
 
     def __init__(self):
-        self.file_name = "agvs_desc/test.yaml"
+        self.file_name = "agvs_desc/twisted_triline.yaml"
         # self.file_name = "agvs_desc/two_circles.yaml"
         # self.file_name = "agvs_desc/three_circles.yaml"
         # self.file_name = "agvs_desc/single_agv.yaml"
 
     def load_agvs_yaml(self):
-        with open(self.file_name) as f:
-            cfg = yaml.safe_load(f)
+        try:
+            with open(self.file_name) as f:
+                cfg = yaml.safe_load(f)
+        except FileNotFoundError:
+            print(f"FileNotFoundError: No such file or directory: {self.file_name}")
+            exit(1)
 
         agvs = {}
         for agv_cfg in cfg["agvs"]:

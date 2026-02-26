@@ -124,7 +124,7 @@ class Visualizer(FigureCanvas):
                 verts = agv.path[curve_idx]
                 for sector in sectors:
                     self.draw_sector_on_curve(verts, sector.t_l, sector.t_u)
-                    # print(sector)
+                    print(sector)
 
     def remove_coll_sectors(self) -> None:
         for csector in self._drawn_elements['csectors']:
