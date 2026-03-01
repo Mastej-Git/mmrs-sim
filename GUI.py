@@ -92,23 +92,24 @@ class GUI(QMainWindow):
         layout2.setSpacing(15)
 
         system_group = QGroupBox("System Time")
-        system_group.setStyleSheet(self._get_group_box_style())
+        system_group.setStyleSheet(StyleSheet.QGroupBoxStatistics.value)
         system_layout = QVBoxLayout(system_group)
         
         self.system_time_label = QLabel("Total time: 0.00 s")
-        self.system_time_label.setStyleSheet(self._get_time_label_style(large=True))
+        # self.system_time_label.setStyleSheet(self._get_time_label_style(large=True))
+        self.system_time_label.setStyleSheet(StyleSheet.TimeLabel(large=True))
         self.system_time_label.setAlignment(Qt.AlignCenter)
         system_layout.addWidget(self.system_time_label)
         
         self.system_status_label = QLabel("Status: Not started")
-        self.system_status_label.setStyleSheet(self._get_status_label_style())
+        self.system_status_label.setStyleSheet(StyleSheet.StatusLabel.value)
         self.system_status_label.setAlignment(Qt.AlignCenter)
         system_layout.addWidget(self.system_status_label)
 
         layout2.addWidget(system_group)
 
         self.robots_group = QGroupBox("Robot Times")
-        self.robots_group.setStyleSheet(self._get_group_box_style())
+        self.robots_group.setStyleSheet(StyleSheet.QGroupBoxStatistics.value)
         self.robots_layout = QGridLayout(self.robots_group)
         self.robots_layout.setSpacing(10)
         
@@ -129,24 +130,6 @@ class GUI(QMainWindow):
 
         self.tab2.setLayout(layout2)
 
-    def _get_group_box_style(self):
-        return """
-            QGroupBox {
-                font-size: 16px;
-                font-weight: bold;
-                color: #FFFFFF;
-                border: 2px solid #444444;
-                border-radius: 8px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-            }
-        """
-
     def _get_time_label_style(self, large=False):
         size = "24px" if large else "14px"
         return f"""
@@ -156,15 +139,6 @@ class GUI(QMainWindow):
                 color: #00FF00;
                 padding: 10px;
             }}
-        """
-
-    def _get_status_label_style(self):
-        return """
-            QLabel {
-                font-size: 14px;
-                color: #AAAAAA;
-                padding: 5px;
-            }
         """
 
     def _init_robot_time_labels(self):
@@ -313,7 +287,7 @@ class GUI(QMainWindow):
 
         self.system_time_label.setText("Total time: 0.00 s")
         self.system_status_label.setText("Status: Not started")
-        self.system_status_label.setStyleSheet(self._get_status_label_style())
+        self.system_status_label.setStyleSheet(StyleSheet.StatusLabel.value)
 
         for agv_id, data in self.agv_times.items():
             data["start"] = None
