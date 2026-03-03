@@ -62,31 +62,34 @@ class GUI(QMainWindow):
         self.agv_time_labels = {}
         self.system_time_label = None
 
-        self.create_tabs_content()
+        self._create_tabs_content()
 
         layout.addWidget(self.tabs, 1)
-        # self.side_panel = self.create_control_panel()
         self.control_panel = ControlPanel()
         self.control_panel.assign_btn_connect_fns([
-            self.on_run_clicked,
-            self.on_pause_clicked,
-            self.on_reset_clicked,
-            self.on_show_paths_clicked,
-            self.on_show_mpoints_clicked,
-            self.on_show_lines_clicked,
-            self.on_show_coll_sect_clicked,
-            self.on_show_all_clicked,
-            self.on_load_agv_clicked
+            self._on_run_clicked,
+            self._on_pause_clicked,
+            self._on_reset_clicked,
+            self._on_show_paths_clicked,
+            self._on_show_mpoints_clicked,
+            self._on_show_lines_clicked,
+            self._on_show_coll_sect_clicked,
+            self._on_show_all_clicked,
+            self._on_load_agv_clicked
         ])
-        # layout.addWidget(self.side_panel)
         layout.addWidget(self.control_panel.upper_panel)
         self.setCentralWidget(central_widget)
 
-    def create_tabs_content(self):
+    def _create_tabs_content(self) -> None:
+        self._create_simulation_tab()
+        self._create_time_stats_tab()
+
+    def _create_simulation_tab(self) -> None:
         layout1 = QVBoxLayout()
         layout1.addWidget(self.visualizer)
         self.tab1.setLayout(layout1)
 
+    def _create_time_stats_tab(self) -> None:
         layout2 = QVBoxLayout()
         layout2.setContentsMargins(20, 20, 20, 20)
         layout2.setSpacing(15)
@@ -96,7 +99,6 @@ class GUI(QMainWindow):
         system_layout = QVBoxLayout(system_group)
         
         self.system_time_label = QLabel("Total time: 0.00 s")
-        # self.system_time_label.setStyleSheet(self._get_time_label_style(large=True))
         self.system_time_label.setStyleSheet(StyleSheet.TimeLabel(large=True))
         self.system_time_label.setAlignment(Qt.AlignCenter)
         system_layout.addWidget(self.system_time_label)
@@ -130,18 +132,7 @@ class GUI(QMainWindow):
 
         self.tab2.setLayout(layout2)
 
-    def _get_time_label_style(self, large=False):
-        size = "24px" if large else "14px"
-        return f"""
-            QLabel {{
-                font-size: {size};
-                font-weight: bold;
-                color: #00FF00;
-                padding: 10px;
-            }}
-        """
-
-    def _init_robot_time_labels(self):
+    def _init_robot_time_labels(self) -> None:
         for i in reversed(range(self.robots_layout.count())):
             item = self.robots_layout.itemAt(i)
             if item and item.widget():
@@ -190,7 +181,7 @@ class GUI(QMainWindow):
                 "finished": False
             }
 
-    def _update_time_display(self):
+    def _update_time_display(self) -> None:
         if not self.is_simulation_running:
             return
 
@@ -240,12 +231,12 @@ class GUI(QMainWindow):
             self.system_status_label.setText("Status: All robots finished")
             self.system_status_label.setStyleSheet("color: #00FF00; font-size: 14px;")
             self._stop_timing()
-            self.on_pause_clicked()
+            self._on_pause_clicked()
         else:
             self.system_status_label.setText("Status: Running")
             self.system_status_label.setStyleSheet("color: #00AAFF; font-size: 14px;")
 
-    def _start_timing(self):
+    def _start_timing(self) -> None:
         current_time = time.time()
         self.simulation_start_time = current_time
         self.is_simulation_running = True
@@ -259,7 +250,7 @@ class GUI(QMainWindow):
 
         self._time_display_timer.start()
 
-    def _stop_timing(self):
+    def _stop_timing(self) -> None:
         if not self.is_simulation_running:
             return
 
@@ -279,7 +270,7 @@ class GUI(QMainWindow):
         self.system_status_label.setText("Status: Paused")
         self.system_status_label.setStyleSheet("color: #FFAA00; font-size: 14px;")
 
-    def _reset_timing(self):
+    def _reset_timing(self) -> None:
         self.simulation_start_time = None
         self.simulation_elapsed_time = 0.0
         self.is_simulation_running = False
@@ -301,7 +292,7 @@ class GUI(QMainWindow):
                 labels["status"].setStyleSheet("color: #AAAAAA; font-size: 14px;")
                 labels["time"].setText("0.00 s")
 
-    def on_run_clicked(self):
+    def _on_run_clicked(self) -> None:
         self.control_panel.btn_run.setEnabled(False)
         self.control_panel.btn_pause.setEnabled(True)
 
@@ -310,7 +301,7 @@ class GUI(QMainWindow):
         
         self._start_timing()
 
-    def on_pause_clicked(self):
+    def _on_pause_clicked(self) -> None:
         self.control_panel.btn_run.setEnabled(True)
         self.control_panel.btn_pause.setEnabled(False)
 
@@ -319,14 +310,14 @@ class GUI(QMainWindow):
         
         self._stop_timing()
 
-    def on_reset_clicked(self):
+    def _on_reset_clicked(self) -> None:
         self.control_panel.btn_run.setEnabled(True)
         self.control_panel.btn_pause.setEnabled(False)
         self.visualizer.reset_simulation()
         
         self._reset_timing()
 
-    def on_show_paths_clicked(self):
+    def _on_show_paths_clicked(self) -> None:
         if self.control_panel.btn_show_paths.isChecked():
             self.control_panel.btn_show_paths.setText("Hide Paths")
             for i in range(self.visualizer.supervisor.get_agvs_number()):
@@ -336,7 +327,7 @@ class GUI(QMainWindow):
             self.visualizer.remove_curves()
         self.visualizer.draw()
 
-    def on_show_mpoints_clicked(self):
+    def _on_show_mpoints_clicked(self) -> None:
         if self.control_panel.btn_show_points.isChecked():
             self.control_panel.btn_show_points.setText("Hide Points")
             for i in range(self.visualizer.supervisor.get_agvs_number()):
@@ -346,7 +337,7 @@ class GUI(QMainWindow):
             self.visualizer.remove_middle_points()
         self.visualizer.draw()
 
-    def on_show_lines_clicked(self):
+    def _on_show_lines_clicked(self) -> None:
         if self.control_panel.btn_show_lines.isChecked():
             self.control_panel.btn_show_lines.setText("Hide Lines")
             for i in range(self.visualizer.supervisor.get_agvs_number()):
@@ -356,7 +347,7 @@ class GUI(QMainWindow):
             self.visualizer.remove_lines()
         self.visualizer.draw()
 
-    def on_show_coll_sect_clicked(self):
+    def _on_show_coll_sect_clicked(self) -> None:
         if self.control_panel.btn_det_col_sec.isChecked():
             self.control_panel.btn_det_col_sec.setText("Hide Coll Sectors")
             self.visualizer.draw_coll_sectors()
@@ -365,7 +356,7 @@ class GUI(QMainWindow):
             self.visualizer.remove_coll_sectors()
         self.visualizer.draw()
 
-    def on_show_all_clicked(self):
+    def _on_show_all_clicked(self) -> None:
         if self.control_panel.btn_show_all.isChecked():
             self.control_panel.btn_show_paths.setCheckable(False)
             self.control_panel.btn_show_points.setCheckable(False)
@@ -397,7 +388,7 @@ class GUI(QMainWindow):
             self.visualizer.remove_coll_sectors()
         self.visualizer.draw()
 
-    def on_load_agv_clicked(self):
+    def _on_load_agv_clicked(self) -> None:
         agvs = self.yaml_agv_loader.load_agvs_yaml()
         self.visualizer.supervisor.load_agvs(agvs)
         self.visualizer.load_agvs_t()
