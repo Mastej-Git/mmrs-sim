@@ -21,6 +21,7 @@ class Visualizer(FigureCanvas):
 
         self.supervisor = StageTransitionControl()
         self.visual_agvs = []
+        self.visual_agv_labels = []
 
         self.t = []
         self.path_idx = []
@@ -73,7 +74,6 @@ class Visualizer(FigureCanvas):
 
             patch = patches.PathPatch(path_draw, facecolor="none", lw=2, edgecolor=self.supervisor.agvs[i].path_color)
             self.ax.add_patch(patch)
-            # self.curve_list.append(patch)
             self._drawn_elements['curves'].append(patch)
 
     def remove_curves(self) -> None:
@@ -149,6 +149,16 @@ class Visualizer(FigureCanvas):
         self.visual_agvs.append(agv)
         self.ax.add_patch(self.visual_agvs[i])
 
+        center = self.supervisor.agvs[i].marked_states[0]
+        text = self.ax.text(
+            center[0], center[1], 
+            str(self.supervisor.agvs[i].id),
+            ha='center', va='center',
+            fontsize=10, fontweight='bold',
+            color='white', zorder=4
+        )
+        self.visual_agv_labels.append(text)
+
     def update_position_forward(self) -> None:
         dt = 0.05
         for i, agv in enumerate(self.supervisor.agvs):
@@ -175,6 +185,7 @@ class Visualizer(FigureCanvas):
 
             new_center = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
             self.visual_agvs[i].center = new_center
+            self.visual_agv_labels[i].set_position(new_center)
 
         # for res_id, res_obj in self.supervisor.ram.global_resources.items():
         #     if len(res_obj.priority_list) > 0:
@@ -195,6 +206,7 @@ class Visualizer(FigureCanvas):
             if agv.path:
                 starting_point = self.bezier_point(0.0, agv.path[0])
                 self.visual_agvs[i].center = starting_point
+                self.visual_agv_labels[i].set_position(starting_point) 
         
         for res_id, res_obj in self.supervisor.ram.global_resources.items():
             res_obj.priority_list = []
@@ -214,6 +226,7 @@ class Visualizer(FigureCanvas):
             if agv.path:
                 starting_point = self.bezier_point(0.0, agv.path[0])
                 self.visual_agvs[i].center = starting_point
+                self.visual_agv_labels[i].set_position(starting_point) 
         
         for res_id, res_obj in self.supervisor.ram.global_resources.items():
             res_obj.priority_list = []
