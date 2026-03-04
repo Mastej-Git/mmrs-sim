@@ -137,9 +137,8 @@ class Visualizer(FigureCanvas):
         self.draw_sector_on_curve(sec2.addresses[1], sec2.t_l, sec2.t_u,)
         self.supervisor.col_sectors.pop(0)
 
-    def draw_bezier_curve(self, i: int) -> None:
+    def draw_agents(self, i: int) -> None:
 
-        self.draw_marked_states()
         agv = patches.Circle(
             self.supervisor.agvs[i].marked_states[0],
             self.supervisor.agvs[i].radius,
