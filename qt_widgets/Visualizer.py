@@ -95,7 +95,7 @@ class Visualizer(FigureCanvas):
     def draw_marked_states(self) -> None:
         for agv in self.supervisor.agvs:
             for marked_state in agv.marked_states:
-                point = patches.Circle(marked_state, 0.1, color=agv.path_color, zorder=4)
+                point = patches.Circle(marked_state, 0.1, color=agv.path_color, zorder=3)
                 self.ax.add_patch(point)
 
     def draw_middle_points(self, i: int) -> None:
@@ -144,7 +144,7 @@ class Visualizer(FigureCanvas):
             self.supervisor.agvs[i].marked_states[0],
             self.supervisor.agvs[i].radius,
             color=self.supervisor.agvs[i].color,
-            zorder=3
+            zorder=4
         )
         self.visual_agvs.append(agv)
         self.ax.add_patch(self.visual_agvs[i])
