@@ -21,6 +21,7 @@ class Visualizer(FigureCanvas):
 
         self.supervisor = StageTransitionControl()
         self.visual_agvs = []
+        self.visual_agv_labels = []
 
         self.t = []
         self.path_idx = []
@@ -73,7 +74,6 @@ class Visualizer(FigureCanvas):
 
             patch = patches.PathPatch(path_draw, facecolor="none", lw=2, edgecolor=self.supervisor.agvs[i].path_color)
             self.ax.add_patch(patch)
-            # self.curve_list.append(patch)
             self._drawn_elements['curves'].append(patch)
 
     def remove_curves(self) -> None:
@@ -95,7 +95,7 @@ class Visualizer(FigureCanvas):
     def draw_marked_states(self) -> None:
         for agv in self.supervisor.agvs:
             for marked_state in agv.marked_states:
-                point = patches.Circle(marked_state, 0.1, color=agv.path_color, zorder=4)
+                point = patches.Circle(marked_state, 0.1, color=agv.path_color, zorder=3)
                 self.ax.add_patch(point)
 
     def draw_middle_points(self, i: int) -> None:
@@ -137,17 +137,26 @@ class Visualizer(FigureCanvas):
         self.draw_sector_on_curve(sec2.addresses[1], sec2.t_l, sec2.t_u,)
         self.supervisor.col_sectors.pop(0)
 
-    def draw_bezier_curve(self, i: int) -> None:
+    def draw_agents(self, i: int) -> None:
 
-        self.draw_marked_states()
         agv = patches.Circle(
             self.supervisor.agvs[i].marked_states[0],
             self.supervisor.agvs[i].radius,
             color=self.supervisor.agvs[i].color,
-            zorder=3
+            zorder=4
         )
         self.visual_agvs.append(agv)
         self.ax.add_patch(self.visual_agvs[i])
+
+        center = self.supervisor.agvs[i].marked_states[0]
+        text = self.ax.text(
+            center[0], center[1], 
+            str(self.supervisor.agvs[i].id),
+            ha='center', va='center',
+            fontsize=10, fontweight='bold',
+            color='white', zorder=4
+        )
+        self.visual_agv_labels.append(text)
 
     def update_position_forward(self) -> None:
         dt = 0.05
@@ -175,6 +184,7 @@ class Visualizer(FigureCanvas):
 
             new_center = self.bezier_point(self.t[i], self.supervisor.agvs[i].path[self.path_idx[i]])
             self.visual_agvs[i].center = new_center
+            self.visual_agv_labels[i].set_position(new_center)
 
         # for res_id, res_obj in self.supervisor.ram.global_resources.items():
         #     if len(res_obj.priority_list) > 0:
@@ -195,6 +205,7 @@ class Visualizer(FigureCanvas):
             if agv.path:
                 starting_point = self.bezier_point(0.0, agv.path[0])
                 self.visual_agvs[i].center = starting_point
+                self.visual_agv_labels[i].set_position(starting_point) 
         
         for res_id, res_obj in self.supervisor.ram.global_resources.items():
             res_obj.priority_list = []
@@ -214,6 +225,7 @@ class Visualizer(FigureCanvas):
             if agv.path:
                 starting_point = self.bezier_point(0.0, agv.path[0])
                 self.visual_agvs[i].center = starting_point
+                self.visual_agv_labels[i].set_position(starting_point) 
         
         for res_id, res_obj in self.supervisor.ram.global_resources.items():
             res_obj.priority_list = []

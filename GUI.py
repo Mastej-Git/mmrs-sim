@@ -400,8 +400,9 @@ class GUI(QMainWindow):
         self.visualizer.supervisor.global_merge()
         self.visualizer.supervisor.get_all_control_points()
 
+        self.visualizer.draw_marked_states()
         for i in range(self.visualizer.supervisor.get_agvs_number()):
-            self.visualizer.draw_bezier_curve(i)
+            self.visualizer.draw_agents(i)
         self.visualizer.draw()
 
         self._init_robot_time_labels()
