@@ -1,14 +1,8 @@
 from PyQt5.QtWidgets import ( 
-    QMainWindow, 
-    QTabWidget, 
-    QWidget, 
     QVBoxLayout, 
     QFrame,
-    QHBoxLayout,
     QSizePolicy,
     QLabel,
-    QGridLayout,
-    QGroupBox,
 )
 from typing import Callable
 from utils.StyleSheet import StyleSheet

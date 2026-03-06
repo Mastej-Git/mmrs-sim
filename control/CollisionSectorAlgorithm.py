@@ -1,5 +1,4 @@
 import numpy as np
-from dataclasses import dataclass
 from scipy.ndimage import label
 
 
@@ -137,7 +136,8 @@ class CollisionSectorAlgorithm:
             idx += 1
             
             key = (curve_id, round(param, 7))
-            if key in checked: continue
+            if key in checked: 
+                continue
             checked.add(key)
 
             curr_verts = v1 if curve_id == 1 else v2
@@ -158,13 +158,17 @@ class CollisionSectorAlgorithm:
                 if dist_sq <= R_sq + 1e-7:
                     expanded = False
                     if r_other < extremes[other_id][0]: 
-                        extremes[other_id][0] = r_other; expanded = True
+                        extremes[other_id][0] = r_other
+                        expanded = True
                     if r_other > extremes[other_id][1]: 
-                        extremes[other_id][1] = r_other; expanded = True
+                        extremes[other_id][1] = r_other
+                        expanded = True
                     if r_back < extremes[curve_id][0]: 
-                        extremes[curve_id][0] = r_back; expanded = True
+                        extremes[curve_id][0] = r_back
+                        expanded = True
                     if r_back > extremes[curve_id][1]: 
-                        extremes[curve_id][1] = r_back; expanded = True
+                        extremes[curve_id][1] = r_back
+                        expanded = True
                     
                     if expanded:
                         queue.append((other_id, r_other))
@@ -206,7 +210,7 @@ class CollisionSectorAlgorithm:
         resource_id = self.get_resource_key(agv1_id, c1_idx, agv2_id, c2_idx)
         
         sectors1, sectors2 = [], []
-        pair_id = [verts1, verts2]
+        # pair_id = [verts1, verts2]
 
         for i in range(1, num_features + 1):
             cluster_mask = (labeled_array == i)

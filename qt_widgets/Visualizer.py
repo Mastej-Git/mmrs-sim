@@ -7,7 +7,6 @@ from matplotlib.path import Path
 import matplotlib.patches as patches
 import numpy as np
 from control.StageTransitionControl import StageTransitionControl
-import time
 
 
 class Visualizer(FigureCanvas):

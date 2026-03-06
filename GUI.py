@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import (
     QVBoxLayout, 
     QFrame,
     QHBoxLayout,
-    QSizePolicy,
     QLabel,
     QGridLayout,
     QGroupBox,

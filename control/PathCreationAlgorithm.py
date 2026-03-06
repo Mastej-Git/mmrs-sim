@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.patches as patches
 
 
 class PathCreationAlgorithm:
