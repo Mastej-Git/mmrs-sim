@@ -1,25 +1,13 @@
-[tool.poetry]
-name = "roombas-simulation"
+[project]
+name = "mmrs-simulator"
 version = "0.1.0"
-description = ""
-authors = [
-    "Michał Mastej <m.mastej1812@gmail.com>"
-]
+description = "Add your description here"
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.12"
-pyqt5 = "^5.15.11"
-matplotlib = "^3.9.2"
-pylint = "^3.2.6"
-casadi = "^3.6"
-pyyaml = "^6.0"
-scipy = "^1.16.3"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.4.1"
-ruff = "^0.12.10"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.10.8",
+    "pyqt5>=5.15.11",
+    "pyyaml>=6.0.3",
+    "ruff>=0.15.1",
+    "scipy>=1.17.1",
+]
