@@ -190,7 +190,7 @@ class StageTransitionControl:
             iterations += 1
             progress = False
             
-            for r_id in remaining_robots[:]:  # Kopia listy do iteracji
+            for r_id in remaining_robots[:]:
                 if self.can_reach_private_state(r_id, temp_ram.global_resources):
                     for res in temp_ram.global_resources.values():
                         res.release(r_id)

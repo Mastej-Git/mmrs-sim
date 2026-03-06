@@ -7,7 +7,7 @@ class PathCreationAlgorithm:
     def __init__(self):
         pass
 
-    def bezier_tangent(self, t: float, verts: list[tuple[int, int]]):
+    def _bezier_tangent(self, t: float, verts: list[tuple[int, int]]):
         p0, p1, p2 = map(np.array, verts)
         d = 2 * (1 - t) * (p1 - p0) + 2 * t * (p2 - p1)
         return float(d[0]), float(d[1])
@@ -44,7 +44,7 @@ class PathCreationAlgorithm:
             if i == 0:
                 set_orient = orientation
             else:
-                set_orient = np.array(self.bezier_tangent(1, bezier_points[i - 1]))
+                set_orient = np.array(self._bezier_tangent(1, bezier_points[i - 1]))
 
             ti_vec = set_orient
             pi_vec = end - start
