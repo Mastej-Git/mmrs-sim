@@ -4,8 +4,11 @@ mpl.use("Qt5Agg")
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.path import Path
+from matplotlib.colors import to_rgba
 import matplotlib.patches as patches
 import numpy as np
+from scipy.ndimage import distance_transform_edt
+from skimage.morphology import skeletonize
 from control.StageTransitionControl import StageTransitionControl
 
 
@@ -32,9 +35,15 @@ class Visualizer(FigureCanvas):
             'curves': [],
             'points': [],
             'lines': [],
-            'csectors': []
+            'csectors': [],
+            'map': None,
+            'voronoi': None
         }
         self.curve_list = []
+
+        self.map_data = None
+        self.voronoi_skeleton = None
+        self.distance_field = None
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_position_forward)
@@ -65,6 +74,89 @@ class Visualizer(FigureCanvas):
         self.ax.set_xlim(0, size)
         self.ax.set_ylim(0, size)
         self.ax.set_aspect("equal")
+
+    def set_map(self, map_data: np.ndarray):
+        self.map_data = map_data
+
+    def draw_map(self, cmap: str = 'gray_r', alpha: float = 1.0) -> None:
+        if self.map_data is None:
+            return
+        
+        if self._drawn_elements['map'] is not None:
+            self._drawn_elements['map'].remove()
+        
+        height, width = self.map_data.shape
+        img = self.ax.imshow(
+            self.map_data,
+            cmap=cmap,
+            alpha=alpha,
+            origin='upper',
+            extent=[0, width, 0, height],
+            zorder=0
+        )
+        self._drawn_elements['map'] = img
+        
+        self.ax.set_xlim(0, width)
+        self.ax.set_ylim(0, height)
+        self.ax.set_aspect('equal')
+
+    def remove_map(self) -> None:
+        if self._drawn_elements['map'] is not None:
+            self._drawn_elements['map'].remove()
+            self._drawn_elements['map'] = None
+
+    def generate_voronoi(self) -> np.ndarray:
+        if self.map_data is None:
+            raise ValueError("No map loaded. Call load_map() first.")
+        
+        free_space = (self.map_data == 0).astype(np.uint8)
+        self.distance_field = distance_transform_edt(free_space)        
+        self.voronoi_skeleton = skeletonize(free_space).astype(np.uint8)
+        
+        return self.voronoi_skeleton
+
+    def draw_voronoi(self, color: str = '#00FFFF', alpha: float = 0.8) -> None:
+
+        if self.voronoi_skeleton is None:
+            return
+        self.remove_voronoi()
+        
+        height, width = self.voronoi_skeleton.shape
+        rgba_color = to_rgba(color, alpha)
+
+        voronoi_rgba = np.zeros((height, width, 4))
+        skeleton_mask = self.voronoi_skeleton == 1
+        voronoi_rgba[skeleton_mask] = rgba_color
+        
+        img = self.ax.imshow(
+            voronoi_rgba,
+            origin='upper',
+            extent=[0, width, 0, height],
+            zorder=1
+        )
+        self._drawn_elements['voronoi'] = img
+
+    def remove_voronoi(self) -> None:
+        if self._drawn_elements['voronoi'] is not None:
+            self._drawn_elements['voronoi'].remove()
+            self._drawn_elements['voronoi'] = None
+
+    def draw_distance_field(self, cmap: str = 'viridis', alpha: float = 0.5) -> None:
+        if self.distance_field is None:
+            self.generate_voronoi()
+        
+        height, width = self.distance_field.shape
+        masked_distance = np.ma.masked_where(self.map_data == 1, self.distance_field)
+        
+        img = self.ax.imshow(
+            masked_distance,
+            cmap=cmap,
+            alpha=alpha,
+            origin='upper',
+            extent=[0, width, 0, height],
+            zorder=0
+        )
+        self._drawn_elements['map'] = img
 
     def draw_curve(self, i: int) -> None:
         for path in self.supervisor.agvs[i].path:
@@ -136,7 +228,7 @@ class Visualizer(FigureCanvas):
         self.draw_sector_on_curve(sec2.addresses[1], sec2.t_l, sec2.t_u,)
         self.supervisor.col_sectors.pop(0)
 
-    def draw_agents(self, i: int) -> None:
+    def draw_agents(self, i: int, add_id: bool) -> None:
 
         agv = patches.Circle(
             self.supervisor.agvs[i].marked_states[0],
@@ -147,15 +239,16 @@ class Visualizer(FigureCanvas):
         self.visual_agvs.append(agv)
         self.ax.add_patch(self.visual_agvs[i])
 
-        center = self.supervisor.agvs[i].marked_states[0]
-        text = self.ax.text(
-            center[0], center[1], 
-            str(self.supervisor.agvs[i].id),
-            ha='center', va='center',
-            fontsize=10, fontweight='bold',
-            color='white', zorder=4
-        )
-        self.visual_agv_labels.append(text)
+        if add_id:
+            center = self.supervisor.agvs[i].marked_states[0]
+            text = self.ax.text(
+                center[0], center[1], 
+                str(self.supervisor.agvs[i].id),
+                ha='center', va='center',
+                fontsize=10, fontweight='bold',
+                color='white', zorder=4
+            )
+            self.visual_agv_labels.append(text)
 
     def update_position_forward(self) -> None:
         dt = 0.05

@@ -115,3 +115,4 @@ class ControlPanel():
 
     def _assign_lower_panel_btn_connect_fnc(self, fnc_list: list[Callable[..., None]]) -> None:
         self.btn_load_agv.clicked.connect(fnc_list[0])
+        self.btn_load_map.clicked.connect(fnc_list[1])

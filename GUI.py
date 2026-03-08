@@ -15,6 +15,7 @@ from utils.StyleSheet import StyleSheet
 from qt_widgets.ControlPanel import ControlPanel
 from qt_widgets.Visualizer import Visualizer
 from utils.YamlAGVLoader import YamlAGVLoader
+from utils.MapLoader import MapLoader
 import time
         
 
@@ -23,7 +24,8 @@ class GUI(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("MMRS Simulator")
-        self.setGeometry(100, 100, 1200, 800)
+        # self.setGeometry(100, 100, 1200, 800)
+        self.showMaximized()
 
         self.simulation_start_time = None
         self.simulation_elapsed_time = 0.0
@@ -57,6 +59,7 @@ class GUI(QMainWindow):
 
         self.visualizer = Visualizer(self, width=5, height=4, dpi=100)
         self.yaml_agv_loader = YamlAGVLoader()
+        self.map_loader = MapLoader()
 
         self.agv_time_labels = {}
         self.system_time_label = None
@@ -74,7 +77,8 @@ class GUI(QMainWindow):
             self._on_show_lines_clicked,
             self._on_show_coll_sect_clicked,
             self._on_show_all_clicked,
-            self._on_load_agv_clicked
+            self._on_load_agv_clicked,
+            self._on_load_map
         ])
         layout.addWidget(self.control_panel.upper_panel)
         self.setCentralWidget(central_widget)
@@ -401,11 +405,24 @@ class GUI(QMainWindow):
 
         self.visualizer.draw_marked_states()
         for i in range(self.visualizer.supervisor.get_agvs_number()):
-            self.visualizer.draw_agents(i)
+            self.visualizer.draw_agents(i, False)
         self.visualizer.draw()
 
         self._init_robot_time_labels()
         self._reset_timing()
+
+    def _on_load_map(self) -> None:
+        map_data = self.map_loader.load_map()
+        self.visualizer.set_map(map_data)
+
+        self.visualizer.draw_map()
+
+        voronoi_data = self.visualizer.generate_voronoi()
+        self.visualizer.draw_voronoi()
+
+        self.visualizer.draw_distance_field()
+
+        self.visualizer.draw()
 
     def _on_update_tick(self):
         for w in (self.path_creation_algorithm, self.single_bc):
