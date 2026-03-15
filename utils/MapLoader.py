@@ -5,7 +5,7 @@ class MapLoader:
 
     def __init__(self):
         self.file_name = "maps/Berlin_0_256.map"
-        self.file_name = "maps/Berlin_0_1024.map"
+        # self.file_name = "maps/Berlin_0_1024.map"
 
     def load_map(self) -> np.ndarray:
         with open(self.file_name, 'r') as f:

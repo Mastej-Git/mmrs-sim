@@ -113,7 +113,7 @@ class Visualizer(FigureCanvas):
         self.distance_field = distance_transform_edt(free_space)        
         self.voronoi_skeleton = skeletonize(free_space).astype(np.uint8)
         
-        return self.voronoi_skeleton
+        return self.voronoi_skeleton, self.distance_field
 
     def draw_voronoi(self, color: str = '#00FFFF', alpha: float = 0.8) -> None:
 

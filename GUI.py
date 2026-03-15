@@ -393,6 +393,22 @@ class GUI(QMainWindow):
 
     def _on_load_agv_clicked(self) -> None:
         agvs = self.yaml_agv_loader.load_agvs_yaml()
+
+        # marked_states = self.visualizer.supervisor.generate_random_marked_states(
+        #     self.voronoi_data, self.distance_field
+        # )
+        # agvs["agv0"].marked_states = marked_states
+
+        new_paths = self.visualizer.supervisor.generate_multiple_paths(
+            num_paths=len(agvs.keys()),
+            voronoi_skeleton=self.voronoi_data,
+            distance_field=self.distance_field
+        )
+        print(len(new_paths))
+
+        for i in range(len(agvs.keys())):
+            agvs[f"agv{i}"].marked_states = new_paths[i]
+
         self.visualizer.supervisor.load_agvs(agvs)
         self.visualizer.load_agvs_t()
 
@@ -417,7 +433,7 @@ class GUI(QMainWindow):
 
         self.visualizer.draw_map()
 
-        voronoi_data = self.visualizer.generate_voronoi()
+        self.voronoi_data, self.distance_field = self.visualizer.generate_voronoi()
         self.visualizer.draw_voronoi()
 
         self.visualizer.draw_distance_field()

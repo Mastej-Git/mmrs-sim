@@ -16,7 +16,7 @@ agvs:
       - [23, 2]   
       - [12, 1] 
     orientation: [0, 1]
-    radius: 0.5
+    radius: 1
     max_v: 1.5
     max_a: 0.5
     color: "#12700EFF"
