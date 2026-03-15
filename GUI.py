@@ -77,8 +77,8 @@ class GUI(QMainWindow):
             self._on_show_lines_clicked,
             self._on_show_coll_sect_clicked,
             self._on_show_all_clicked,
-            self._on_load_agv_clicked,
-            self._on_load_map
+            self._on_load_pure_agvs_clicked,
+            self._on_load_agv_with_map_clicked
         ])
         layout.addWidget(self.control_panel.upper_panel)
         self.setCentralWidget(central_widget)
@@ -391,17 +391,26 @@ class GUI(QMainWindow):
             self.visualizer.remove_coll_sectors()
         self.visualizer.draw()
 
-    def _on_load_agv_clicked(self) -> None:
+    def _on_load_agvs_and_map(self, with_map: bool) -> None:
         agvs = self.yaml_agv_loader.load_agvs_yaml()
 
-        new_paths = self.visualizer.supervisor.ran_marked_states_gen.generate_multiple_paths(
-            num_paths=len(agvs.keys()),
-            voronoi_skeleton=self.voronoi_data,
-            distance_field=self.distance_field
-        )
+        if with_map:
+            map_data = self.map_loader.load_map()
+            self.visualizer.set_map(map_data)
+            self.visualizer.draw_map()
 
-        for i in range(len(agvs.keys())):
-            agvs[f"agv{i}"].marked_states = new_paths[i]
+            voronoi_data, distance_field = self.visualizer.generate_voronoi()
+            self.visualizer.draw_voronoi()
+            self.visualizer.draw_distance_field()
+
+            new_paths = self.visualizer.supervisor.ran_marked_states_gen.generate_multiple_paths(
+                num_paths=len(agvs.keys()),
+                voronoi_skeleton=voronoi_data,
+                distance_field=distance_field
+            )
+
+            for i in range(len(agvs.keys())):
+                agvs[f"agv{i}"].marked_states = new_paths[i]
 
         self.visualizer.supervisor.load_agvs(agvs)
         self.visualizer.load_agvs_t()
@@ -421,18 +430,11 @@ class GUI(QMainWindow):
         self._init_robot_time_labels()
         self._reset_timing()
 
-    def _on_load_map(self) -> None:
-        map_data = self.map_loader.load_map()
-        self.visualizer.set_map(map_data)
+    def _on_load_pure_agvs_clicked(self) -> None:
+        self._on_load_agvs_and_map(False)
 
-        self.visualizer.draw_map()
-
-        self.voronoi_data, self.distance_field = self.visualizer.generate_voronoi()
-        self.visualizer.draw_voronoi()
-
-        self.visualizer.draw_distance_field()
-
-        self.visualizer.draw()
+    def _on_load_agv_with_map_clicked(self) -> None:
+        self._on_load_agvs_and_map(True)
 
     def _on_update_tick(self):
         for w in (self.path_creation_algorithm, self.single_bc):
